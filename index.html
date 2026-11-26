@@ -1,0 +1,2441 @@
+<!DOCTYPE html>
+<html lang="id" class="dark scroll-smooth">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HS-GOLD SPECTRAGEO PRO v1.0 — Korelasi Spektral & Vektor Geokimia Endapan Emas High-Sulfidation (HS)</title>
+<meta name="description" content="Command Center Geosains & Eksplorasi Mineral: Integrasi Hyperspectral Remote Sensing (EMIT/ASTER/Sentinel-2, SAM, NLSMA) dan Geochemical Pathfinder (Au, As, Sb, Hg, Tl, Cu) untuk Pemetaan Sistem Epithermal High-Sulfidation (SGVI).">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%23051326'/%3E%3Cpolygon points='32,8 54,48 10,48' fill='%23f59e0b' opacity='0.85'/%3E%3Ccircle cx='32' cy='34' r='9' fill='%2322d3ee'/%3E%3C/svg%3E">
+
+<!-- Tailwind CSS -->
+<script src="https://cdn.tailwindcss.com"></script>
+<script>tailwind.config={darkMode:'class'}</script>
+
+<!-- Fonts & Icons -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700;800&family=Orbitron:wght@500;600;700;800;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+<!-- Three.js r128 -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+
+<style>
+:root{
+  --bg-main:#030b17;
+  --bg-card:rgba(7,20,38,.88);
+  --bg-header:rgba(5,18,36,.94);
+  --bd:rgba(34,211,238,.34);
+  --tx:#f1f7fd;
+  --mu:#94a9c2;
+  --acc:#f59e0b;
+  --cy:#22d3ee;
+  --em:#34d399;
+  --ro:#fb7185;
+}
+html:not(.dark){
+  --bg-main:#eaf2f9;
+  --bg-card:rgba(255,255,255,.94);
+  --bg-header:rgba(6,24,46,.97);
+  --bd:rgba(2,132,199,.38);
+  --tx:#0b1b2e;
+  --mu:#476079;
+}
+html,body{scroll-behavior:smooth;overflow-x:hidden}
+body{background:var(--bg-main);color:var(--tx);font-family:'Inter',sans-serif;transition:background .3s,color .3s}
+.font-tech{font-family:'Orbitron',sans-serif}
+.font-mono{font-family:'JetBrains Mono',monospace}
+.font-arabic{font-family:'Amiri',serif;direction:rtl}
+
+/* Glassmorphic Command Card */
+.cmd-card{
+  background:var(--bg-card);
+  border:1.5px solid var(--bd);
+  border-radius:1rem;
+  backdrop-filter:blur(14px);
+  -webkit-backdrop-filter:blur(14px);
+  box-shadow:0 12px 32px -12px rgba(0,0,0,.72);
+  transition:border-color .25s,box-shadow .25s,transform .2s;
+}
+.cmd-card:hover{
+  border-color:rgba(245,158,11,.62);
+  box-shadow:0 0 28px rgba(34,211,238,.18);
+}
+html:not(.dark) .text-slate-300,html:not(.dark) .text-slate-200{color:#334e68}
+html:not(.dark) .text-white{color:#0b1b2e}
+html:not(.dark) .cmd-card .text-white{color:#0b1b2e}
+html:not(.dark) header .text-white,html:not(.dark) .keepwhite{color:#fff}
+
+/* Blueprint Grid */
+.blueprint{
+  background-color:#04192e;
+  background-image:
+    linear-gradient(rgba(56,189,248,.14) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(56,189,248,.14) 1px,transparent 1px),
+    linear-gradient(rgba(245,158,11,.06) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(245,158,11,.06) 1px,transparent 1px);
+  background-size:72px 72px,72px 72px,18px 18px,18px 18px;
+}
+
+/* Scrollbar */
+::-webkit-scrollbar{width:7px;height:7px}
+::-webkit-scrollbar-track{background:rgba(2,12,24,.6)}
+::-webkit-scrollbar-thumb{background:rgba(34,211,238,.45);border-radius:4px}
+
+/* Toolbar & Buttons */
+.hdr-chip{
+  height:36px;display:inline-flex;align-items:center;gap:7px;padding:0 13px;
+  border-radius:11px;font-size:11px;white-space:nowrap;cursor:pointer;
+  transition:transform .15s,filter .15s,box-shadow .2s;
+}
+.hdr-chip:hover{transform:translateY(-1px);filter:brightness(1.12)}
+.hdr-ico{height:36px;width:36px;display:inline-flex;align-items:center;justify-content:center;border-radius:11px;cursor:pointer}
+
+.btn{
+  display:inline-flex;align-items:center;gap:7px;padding:8px 14px;border-radius:10px;
+  font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:800;cursor:pointer;
+  transition:transform .15s,filter .15s,box-shadow .2s;border:1px solid transparent;
+}
+.btn:hover{transform:translateY(-1px);filter:brightness(1.1)}
+.btn:active{transform:none}
+.btn-pri{background:linear-gradient(135deg,#0284c7,#0ea5e9);color:#fff;box-shadow:0 6px 18px -6px rgba(14,165,233,.7)}
+.btn-acc{background:linear-gradient(135deg,#f59e0b,#fb923c);color:#1c1003;box-shadow:0 6px 18px -6px rgba(245,158,11,.7)}
+.btn-em{background:linear-gradient(135deg,#059669,#10b981);color:#fff}
+.btn-pur{background:linear-gradient(135deg,#7c3aed,#a855f7);color:#fff}
+.btn-gh{background:rgba(8,26,48,.82);border-color:rgba(56,189,248,.38);color:#bae6fd}
+html:not(.dark) .btn-gh{background:#fff;color:#075985}
+
+/* Inputs & Tables */
+.inp{
+  background:rgba(2,12,24,.82);border:1px solid rgba(56,189,248,.35);border-radius:8px;
+  color:var(--tx);padding:6px 9px;font-family:'JetBrains Mono',monospace;font-size:12px;
+  width:100%;outline:none;transition:border-color .2s,box-shadow .2s;
+}
+html:not(.dark) .inp{background:#fff}
+.inp:focus{border-color:#22d3ee;box-shadow:0 0 0 2px rgba(34,211,238,.25)}
+.lbl{display:block;font-size:10px;color:var(--mu);font-family:'JetBrains Mono',monospace;text-transform:uppercase;letter-spacing:.04em;margin-bottom:3px;font-weight:700}
+.sub{font-size:10px;color:#7c93ad;font-family:'JetBrains Mono',monospace}
+.range{accent-color:#f59e0b;width:100%;cursor:pointer}
+
+.tabbtn{
+  padding:9px 14px;border-radius:11px;font-size:11px;font-family:'JetBrains Mono',monospace;
+  font-weight:800;white-space:nowrap;cursor:pointer;border:1px solid rgba(56,189,248,.28);
+  background:rgba(8,26,48,.82);color:#9fb7d1;transition:all .2s;
+}
+.tabbtn:hover{color:#fff;border-color:#22d3ee}
+.tabbtn.on{background:linear-gradient(135deg,#f59e0b,#fb923c);color:#1c1003;border-color:#fbbf24;box-shadow:0 0 20px rgba(245,158,11,.4)}
+html:not(.dark) .tabbtn{background:#fff;color:#32506b}
+html:not(.dark) .tabbtn.on{color:#1c1003}
+
+.pill{display:inline-block;padding:2px 8px;border-radius:999px;font-size:9.5px;font-family:'JetBrains Mono',monospace;font-weight:800}
+.pill.ok{background:rgba(16,185,129,.2);color:#6ee7b7;border:1px solid rgba(16,185,129,.55)}
+.pill.warn{background:rgba(245,158,11,.2);color:#fcd34d;border:1px solid rgba(245,158,11,.55)}
+.pill.bad{background:rgba(244,63,94,.2);color:#fda4af;border:1px solid rgba(244,63,94,.55)}
+.pill.info{background:rgba(14,165,233,.2);color:#7dd3fc;border:1px solid rgba(14,165,233,.55)}
+.pill.pur{background:rgba(168,85,247,.2);color:#d8b4fe;border:1px solid rgba(168,85,247,.55)}
+html:not(.dark) .pill.ok{color:#047857}
+html:not(.dark) .pill.warn{color:#92400e}
+html:not(.dark) .pill.bad{color:#9f1239}
+html:not(.dark) .pill.info{color:#075985}
+html:not(.dark) .pill.pur{color:#6b21a8}
+
+table.eng{width:100%;border-collapse:collapse;font-size:11.5px}
+table.eng th{
+  font-size:9.5px;letter-spacing:.06em;text-transform:uppercase;color:#7dd3fc;text-align:left;
+  padding:8px 9px;border-bottom:1.5px solid rgba(56,189,248,.35);background:rgba(8,26,48,.82);
+  font-weight:800;white-space:nowrap;position:sticky;top:0;z-index:1;
+}
+table.eng td{padding:7px 9px;border-bottom:1px solid rgba(51,78,104,.45);font-family:'JetBrains Mono',monospace;vertical-align:top}
+table.eng tr:hover td{background:rgba(34,211,238,.09)}
+html:not(.dark) table.eng th{background:#d6e8f6;color:#075985}
+html:not(.dark) table.eng td{border-color:#c5d8e8}
+
+.kpi{padding:13px;border-radius:14px;position:relative;overflow:hidden}
+.kpi::after{content:'';position:absolute;right:-14px;top:-14px;width:70px;height:70px;border-radius:50%;background:radial-gradient(circle,rgba(245,158,11,.18),transparent 70%)}
+.kpi .v{font-family:'Orbitron',sans-serif;font-weight:900;font-size:clamp(.85rem,1.15vw + .25rem,1.22rem);line-height:1.18;overflow-wrap:anywhere}
+.kpi .lab{font-size:9.5px;line-height:1.2}
+
+/* Animations */
+@keyframes floatY{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
+@keyframes shimmer{0%{background-position:-200% 0}100%{background-position:200% 0}}
+@keyframes fadeUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
+@keyframes scanBeam{0%{transform:translateX(-100%)}100%{transform:translateX(200%)}}
+.fade-up{animation:fadeUp .45s ease both}
+.shimmer-text{
+  background:linear-gradient(90deg,#fff,#fcd34d,#22d3ee,#fff);
+  background-size:200% 100%;-webkit-background-clip:text;background-clip:text;color:transparent;
+  animation:shimmer 6s linear infinite;
+}
+
+.ws-section{display:none}
+.ws-section.on{display:block;animation:fadeUp .4s ease both}
+
+/* Modals & Chat */
+.modal-bg{position:fixed;inset:0;background:rgba(1,8,16,.8);backdrop-filter:blur(7px);z-index:20000;display:none;align-items:center;justify-content:center;padding:14px}
+.modal-bg.on{display:flex;animation:fadeUp .25s ease both}
+.modal-box{width:min(1120px,100%);max-height:92vh;overflow:auto;background:var(--bg-card);border:1.5px solid var(--bd);border-radius:1.1rem;box-shadow:0 30px 80px rgba(0,0,0,.85)}
+.earth-interactive-canvas{touch-action:none;cursor:grab}
+.earth-interactive-canvas:active{cursor:grabbing}
+.bar-track{height:9px;border-radius:99px;background:rgba(51,78,104,.5);overflow:hidden}
+.bar-fill{height:100%;border-radius:99px;transition:width .7s cubic-bezier(.2,.8,.2,1)}
+canvas.ch{width:100%;display:block;border-radius:10px}
+.scroll-x{max-width:100%;overflow-x:auto;-webkit-overflow-scrolling:touch}
+.chatbubble{max-width:93%;padding:9px 12px;border-radius:13px;font-size:12px;line-height:1.52}
+
+@media print{.no-print{display:none!important}}
+</style>
+</head>
+<body class="min-h-screen flex flex-col relative pb-20">
+
+<!-- ================= LAYER B: BACKGROUND 3D BUMI NYATA ================= -->
+<div id="bgEarthContainer" class="fixed inset-0 z-0 overflow-hidden bg-[radial-gradient(ellipse_at_center,_#08213e_0%,_#020c1a_75%,_#01050c_100%)]">
+  <div id="bgEarthCanvas" class="w-full h-full earth-interactive-canvas opacity-65"></div>
+</div>
+
+<!-- ================= LAYER A: LAYAR LOADING AWAL ANIMASI 3D BUMI NYATA ================= -->
+<div id="loadingOverlay" class="fixed inset-0 z-[10000] bg-slate-950 text-white flex flex-col items-center justify-between p-3 sm:p-5 transition-opacity duration-700 select-none overflow-y-auto">
+  <div id="loadingEarthCanvas" class="fixed inset-0 w-full h-full z-0 earth-interactive-canvas"></div>
+  <div class="fixed inset-0 bg-[radial-gradient(circle_at_center,transparent_22%,rgba(1,7,15,.84)_100%)] pointer-events-none z-[1]"></div>
+
+  <!-- Top Title & Real-time Masehi + Hijriyah Bar -->
+  <div class="relative z-10 text-center mt-1 space-y-2 max-w-4xl mx-auto w-full">
+    <div class="inline-flex flex-wrap items-center justify-center gap-2 font-mono text-[10px]">
+      <span class="bg-amber-500 text-slate-950 px-2.5 py-0.5 rounded font-black uppercase">HYPERSPECTRAL · GEOCHEMISTRY COMMAND CENTER</span>
+      <span class="bg-sky-900/90 text-sky-200 border border-sky-500/50 px-2.5 py-0.5 rounded font-bold">EMIT · ASTER · SENTINEL-2 · SAM · NLSMA · SGVI</span>
+    </div>
+    <h1 class="font-tech text-xl sm:text-3xl md:text-4xl font-black tracking-wider shimmer-text uppercase">HS-GOLD SPECTRAGEO PRO v1.0</h1>
+    <p class="font-mono text-[10.5px] sm:text-xs text-sky-200/95">Korelasi Spektral dan Vektor Geokimia pada Endapan Emas High-Sulfidation (HS) Epithermal</p>
+
+    <!-- Widget Hari & Waktu Masehi + Hijriyah Real-Time -->
+    <div class="inline-flex flex-wrap items-center justify-center gap-3 bg-slate-950/85 border border-amber-400/50 px-4 py-1.5 rounded-full font-mono text-[10.5px] shadow-lg">
+      <span class="text-amber-300 font-black"><i class="fa-regular fa-clock mr-1 animate-pulse"></i><span id="bootTime">00:00:00 WIB</span></span>
+      <span class="text-slate-500">|</span>
+      <span class="text-sky-200"><i class="fa-regular fa-calendar mr-1 text-cyan-400"></i><span id="bootDateMasehi">—</span></span>
+      <span class="text-slate-500">|</span>
+      <span class="text-emerald-300 font-bold"><i class="fa-solid fa-moon mr-1 text-amber-400"></i><span id="bootDateHijri">—</span></span>
+    </div>
+  </div>
+
+  <!-- Middle: Kata Motivasi, Kata Bijak & Doa-doa Islami -->
+  <div class="relative z-10 w-full max-w-2xl mx-auto my-2 pointer-events-auto">
+    <div id="bootWisCard" class="cmd-card p-3.5 sm:p-4 text-center keepwhite" style="background:rgba(3,14,28,.82);border-color:rgba(245,158,11,.45)">
+      <div class="flex items-center justify-between mb-1">
+        <span id="bootWisBadge" class="pill warn">DOA ILMU & EKSPLORASI</span>
+        <button class="text-[10px] font-mono text-sky-300 hover:text-amber-300 cursor-pointer" onclick="nextBootWis()"><i class="fa-solid fa-rotate mr-1"></i>Ganti Hikmah</button>
+      </div>
+      <div id="bootWisAr" class="font-arabic text-xl sm:text-2xl text-amber-200 leading-relaxed"></div>
+      <div id="bootWisLat" class="text-sky-200 italic text-[11px] mt-0.5"></div>
+      <div id="bootWisTx" class="text-slate-100 text-xs sm:text-sm mt-1 leading-relaxed"></div>
+      <div id="bootWisSrc" class="font-mono text-[9.5px] text-amber-300 mt-1"></div>
+    </div>
+  </div>
+
+  <!-- Bottom: Progress Bar & Action Buttons -->
+  <div class="relative z-10 w-full max-w-xl mx-auto mb-2 space-y-2.5 pointer-events-auto">
+    <div class="cmd-card p-3.5" style="background:rgba(4,16,32,.88)">
+      <div class="flex justify-between font-mono text-[11px] mb-1.5">
+        <span id="bootStage" class="text-sky-300 font-bold">Menginisialisasi sensor hiperspektral…</span>
+        <span id="bootPct" class="text-amber-300 font-black">0%</span>
+      </div>
+      <div class="bar-track"><div id="bootBar" class="bar-fill" style="width:0;background:linear-gradient(90deg,#0ea5e9,#22d3ee,#f59e0b)"></div></div>
+      <ul id="bootLog" class="mt-2.5 font-mono text-[10px] text-slate-300 space-y-0.5 h-[66px] overflow-hidden"></ul>
+    </div>
+    <div class="flex gap-2 justify-center flex-wrap">
+      <button id="btnEnter" class="btn btn-acc opacity-40 pointer-events-none" onclick="dismissLoadingScreen()"><i class="fa-solid fa-arrow-right-to-bracket"></i> MASUK KE COMMAND CENTER</button>
+      <button class="btn btn-gh" onclick="toggleHoldBoot()" id="btnHold"><i class="fa-regular fa-hand"></i> TAHAN LAYAR BUMI</button>
+    </div>
+    <p class="text-center font-mono text-[9.5px] text-slate-400">Geser untuk memutar Bumi 3D · Scroll untuk zoom · Pengembang: Ir. Mohamad Hartadi, S.T. (PT. Agrinas Palma Nusantara)</p>
+  </div>
+</div>
+
+<!-- ================= MAIN COMMAND CENTER ================= -->
+<div id="mainWrap" class="w-full max-w-[1800px] mx-auto p-3 md:p-4 flex-1 flex flex-col gap-4 relative z-10">
+
+  <!-- HEADER -->
+  <header class="w-full bg-[var(--bg-header)] backdrop-blur-md p-3 md:p-4 rounded-2xl border-2 border-[var(--bd)] shadow-xl flex flex-col gap-2.5 overflow-hidden relative">
+    <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-3 w-full min-w-0 relative">
+      <div class="flex items-center gap-3 min-w-0 flex-1">
+        <div class="shrink-0 w-12 h-12 rounded-xl bg-gradient-to-br from-amber-400 via-orange-500 to-rose-500 text-slate-950 flex items-center justify-center text-xl shadow-lg" style="animation:floatY 4s ease-in-out infinite">
+          <i class="fa-solid fa-satellite"></i>
+        </div>
+        <div class="min-w-0 flex-1">
+          <div class="flex items-center gap-1.5 flex-wrap">
+            <span class="bg-amber-500 text-slate-950 text-[10px] font-mono px-2 py-0.5 rounded font-black uppercase">GEOSAINS &amp; EKSPLORASI MINERAL</span>
+            <span class="bg-sky-900/90 text-sky-300 border border-sky-500/50 text-[10px] font-mono px-2 py-0.5 rounded font-bold uppercase">EPITHERMAL HIGH-SULFIDATION (HS)</span>
+            <span class="bg-slate-900 text-emerald-300 border border-emerald-600/60 text-[10px] font-mono px-2 py-0.5 rounded font-bold uppercase">EMIT · ASTER · SENTINEL-2 · SGVI</span>
+          </div>
+          <h1 class="font-tech text-sm md:text-lg font-black tracking-wider uppercase mt-1 leading-tight shimmer-text">
+            HS-GOLD SPECTRAGEO PRO <span class="text-amber-400 text-xs align-top" style="-webkit-text-fill-color:#fbbf24">v1.0</span> — Korelasi Spektral &amp; Vektor Geokimia Endapan Emas HS
+          </h1>
+          <p class="hidden md:flex text-[10px] font-mono text-slate-300 mt-0.5 items-center gap-2 font-bold">
+            <span class="inline-block w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping shrink-0"></span>
+            <span>SWIR Al–OH (1,40 / 1,90 / 2,17–2,21 µm) → SAM &amp; NLSMA → Pathfinder (Au-As-Sb-Hg-Tl-Cu) → SGVI = 0,30S + 0,35G + 0,25T + 0,10L → Target P1–P4</span>
+          </p>
+        </div>
+      </div>
+
+      <!-- Real-Time Clock Masehi + Hijriyah -->
+      <div class="flex items-center bg-slate-950/90 border border-sky-500/40 px-3.5 py-1.5 shrink-0 rounded-xl keepwhite self-start lg:self-auto">
+        <i class="fa-regular fa-clock text-amber-400 animate-pulse text-lg mr-2.5"></i>
+        <div class="flex flex-col font-mono">
+          <span id="topDate" class="text-[10px] font-bold text-sky-200 uppercase">—</span>
+          <span id="topHijri" class="text-[10px] font-bold text-emerald-300">—</span>
+          <span id="topTime" class="text-sm md:text-base font-black font-tech tracking-widest text-transparent bg-clip-text bg-gradient-to-r from-amber-400 to-cyan-400">00:00:00 WIB</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Preset Scenarios & Action Toolbar -->
+    <div id="hdrBar" class="flex flex-wrap items-center gap-2 w-full justify-between font-mono text-[11px] border-t border-sky-900/60 pt-2.5 relative">
+      <div class="flex flex-wrap items-center gap-1.5">
+        <button class="hdr-chip bg-sky-900 text-white border border-sky-400 font-bold" onclick="applyPreset('core')" id="pr_core"><i class="fa-solid fa-fire-flame-curved text-amber-400"></i>1. INTI SILISIFIKASI + ADV. ARGILLIC</button>
+        <button class="hdr-chip bg-slate-800 text-slate-200 border border-slate-700 font-bold" onclick="applyPreset('lithocap')" id="pr_lithocap"><i class="fa-solid fa-mountain-sun text-cyan-400"></i>2. LITHOCAP (EROSI DANGKAL)</button>
+        <button class="hdr-chip bg-slate-800 text-slate-200 border border-slate-700 font-bold" onclick="applyPreset('porphyry')" id="pr_porphyry"><i class="fa-solid fa-gem text-rose-400"></i>3. SISTEM PORFIRI-HS DALAM (Cu-Au)</button>
+        <button class="hdr-chip bg-slate-800 text-slate-200 border border-slate-700 font-bold" onclick="applyPreset('supergene')" id="pr_supergene"><i class="fa-solid fa-layer-group text-emerald-400"></i>4. PERIFERAL / OKSIDASI SUPERGEN</button>
+      </div>
+      <div class="flex flex-wrap items-center gap-1.5">
+        <button class="hdr-chip bg-amber-950 text-amber-300 border border-amber-500/70 font-bold" onclick="exportWord()"><i class="fa-solid fa-file-word text-amber-400"></i>LAPORAN WORD</button>
+        <button class="hdr-chip bg-slate-800 text-cyan-300 border border-cyan-500/50 font-bold" onclick="exportJSON()"><i class="fa-solid fa-file-code"></i>JSON</button>
+        <button class="hdr-chip bg-slate-800 text-emerald-300 border border-emerald-500/50 font-bold" onclick="exportCSV()"><i class="fa-solid fa-file-csv"></i>CSV</button>
+        <button class="hdr-chip bg-gradient-to-r from-amber-500 via-lime-500 to-emerald-500 text-slate-950 font-black" onclick="openModal('mApps')"><i class="fa-solid fa-cubes-stacked"></i>MY APLIKASI</button>
+        <button class="hdr-chip bg-slate-800 text-amber-300 border border-amber-500/50 font-bold" onclick="openModal('mCreator')"><i class="fa-solid fa-user-tie"></i>PENELITI / DEV</button>
+        <button class="hdr-chip bg-indigo-950 text-indigo-200 border border-indigo-400/60 font-bold" onclick="toggleSS(true)"><i class="fa-solid fa-earth-asia text-sky-400"></i>SCREENSAVER</button>
+        <button class="hdr-ico bg-slate-900 border border-slate-700 text-amber-400" onclick="toggleTheme()" title="Ubah Tema Gelap/Terang"><i id="themeIcon" class="fa-solid fa-moon"></i></button>
+      </div>
+    </div>
+  </header>
+
+  <!-- 6-CARD KPI STRIP -->
+  <section id="kpiRow" class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 font-mono"></section>
+
+  <!-- NAVIGATION TABS -->
+  <nav id="tabNav" class="cmd-card p-2 flex gap-1.5 overflow-x-auto no-print" style="scrollbar-width:thin"></nav>
+
+  <!-- ================= TAB 1: DASBOR UTAMA & PENAMPANG ZONASI HS ================= -->
+  <section id="s-dash" class="ws-section on space-y-4">
+    <div class="grid grid-cols-1 xl:grid-cols-12 gap-4">
+      <!-- Penampang Konseptual Zonasi Alterasi HS -->
+      <div class="xl:col-span-7 cmd-card p-4 flex flex-col justify-between">
+        <div class="flex flex-wrap justify-between items-center gap-2 mb-2">
+          <h3 class="font-tech text-sm font-black text-amber-300"><i class="fa-solid fa-volcano mr-2"></i>MODEL ZONASI ALTERASI HS (PENAMPANG KONSEPTUAL)</h3>
+          <div class="flex flex-wrap gap-1.5 font-mono text-[10px]" id="xsModes"></div>
+        </div>
+        <div class="blueprint rounded-xl overflow-hidden relative border border-sky-800/60" style="aspect-ratio:16/9">
+          <svg id="xsSvg" viewBox="0 0 960 540" class="w-full h-full"></svg>
+        </div>
+        <div id="xsLegend" class="flex flex-wrap gap-3 mt-2.5 font-mono text-[10px] text-slate-300"></div>
+      </div>
+
+      <!-- Peta Hasil Integrasi SGVI (0 - 5 km) -->
+      <div class="xl:col-span-5 cmd-card p-4 flex flex-col justify-between">
+        <div class="flex flex-wrap justify-between items-center gap-2 mb-2">
+          <h3 class="font-tech text-sm font-black text-cyan-300"><i class="fa-solid fa-map-location-dot mr-2"></i>CONTOH HASIL INTEGRASI SGVI (0–5 KM)</h3>
+          <div class="flex gap-1.5 font-mono text-[10px]">
+            <button class="btn btn-gh" style="padding:4px 8px" onclick="toggleSgviLayer('fault')"><i class="fa-solid fa-bolt"></i> Struktur</button>
+            <button class="btn btn-gh" style="padding:4px 8px" onclick="toggleSgviLayer('sil')"><i class="fa-regular fa-circle-dot"></i> Silisifikasi</button>
+            <button class="btn btn-acc" style="padding:4px 8px" onclick="regenSgviMap()"><i class="fa-solid fa-arrows-rotate"></i> Simulasi</button>
+          </div>
+        </div>
+        <div class="relative rounded-xl overflow-hidden border border-sky-700/60 bg-slate-950">
+          <canvas id="sgviMapCanvas" class="w-full cursor-crosshair block" height="340"></canvas>
+        </div>
+        <!-- Legend & Pixel Inspector -->
+        <div class="mt-2.5 space-y-2">
+          <div class="flex flex-wrap items-center justify-between gap-2 font-mono text-[10px]">
+            <div class="flex flex-wrap gap-2">
+              <span class="flex items-center gap-1"><i class="w-3 h-3 rounded-sm inline-block bg-red-600"></i><b>P1</b> Sangat Tinggi (≥0.75)</span>
+              <span class="flex items-center gap-1"><i class="w-3 h-3 rounded-sm inline-block bg-orange-500"></i><b>P2</b> Tinggi (0.60–0.74)</span>
+              <span class="flex items-center gap-1"><i class="w-3 h-3 rounded-sm inline-block bg-yellow-400"></i><b>P3</b> Sedang (0.45–0.59)</span>
+              <span class="flex items-center gap-1"><i class="w-3 h-3 rounded-sm inline-block bg-emerald-500"></i><b>P4</b> Rendah (&lt;0.45)</span>
+            </div>
+          </div>
+          <div id="mapInspectBox" class="rounded-lg bg-slate-950/60 border border-sky-800/60 p-2.5 font-mono text-[10.5px] text-slate-200">
+            <i class="fa-solid fa-crosshairs text-amber-400 mr-1.5"></i>Klik atau arahkan kursor pada peta SGVI (0–5 km) untuk menginspeksi koordinat UTM, skor S/G/T/L, dan kelas prioritas target bor.
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Temuan Kunci & Catatan Eksplorasi -->
+    <div class="cmd-card p-4">
+      <h3 class="font-tech text-sm font-black text-amber-300 mb-2.5"><i class="fa-solid fa-lightbulb mr-2"></i>TEMUAN KUNCI &amp; IMPLIKASI EKSPLORASI SISTEM HIGH-SULFIDATION</h3>
+      <div id="insights" class="grid sm:grid-cols-2 lg:grid-cols-3 gap-3 text-xs"></div>
+    </div>
+  </section>
+
+  <!-- ================= TAB 2: SPEKTROSKOPI SWIR, SAM & NLSMA ================= -->
+  <section id="s-spec" class="ws-section space-y-4">
+    <div class="grid grid-cols-1 xl:grid-cols-12 gap-4">
+      <!-- Spectral Curve Chart -->
+      <div class="xl:col-span-8 cmd-card p-4 space-y-3">
+        <div class="flex flex-wrap items-center justify-between gap-2">
+          <h3 class="font-tech text-sm font-black text-cyan-300"><i class="fa-solid fa-wave-square mr-2"></i>CONTOH RESPON SPEKTRAL MINERAL HS (0,4 – 2,5 µm)</h3>
+          <div class="flex flex-wrap gap-1.5 font-mono text-[10px]">
+            <button class="btn btn-gh" id="btnBandEMIT" onclick="toggleSensorBand('emit')">EMIT (Hiperspektral)</button>
+            <button class="btn btn-gh" id="btnBandASTER" onclick="toggleSensorBand('aster')">ASTER SWIR</button>
+            <button class="btn btn-gh" id="btnBandS2" onclick="toggleSensorBand('s2')">Sentinel-2</button>
+          </div>
+        </div>
+        <canvas id="chSpec" class="ch" height="330"></canvas>
+        <div class="rounded-xl bg-slate-950/50 border border-sky-900/60 p-3 font-mono text-[11px] text-slate-200 flex flex-wrap items-center justify-between gap-2">
+          <span><i class="fa-solid fa-circle-info text-amber-400 mr-1.5"></i><b>Ciri Utama:</b> Fitur serapan <b>Al–OH</b> kuat pada <b>~1,40 µm</b>, <b>~1,90 µm</b>, dan <b>~2,17–2,21 µm</b>, khas mineral alterasi HS (<i>Alunite, Kaolinite/Dickite, Pyrophyllite</i>).</span>
+          <span class="pill pur">SWIR Diagnostic Region</span>
+        </div>
+      </div>
+
+      <!-- Quantitative SAM & NLSMA Simulator -->
+      <div class="xl:col-span-4 cmd-card p-4 space-y-3">
+        <h3 class="font-tech text-sm font-black text-amber-300"><i class="fa-solid fa-calculator mr-2"></i>SIMULATOR KUANTITATIF SAM &amp; NLSMA</h3>
+
+        <!-- Formula Display -->
+        <div class="rounded-xl bg-slate-950/60 border border-sky-800/60 p-3 font-mono text-[10.5px] space-y-1.5">
+          <div class="text-cyan-300 font-bold">1. Spectral Angle Mapper (SAM):</div>
+          <div class="text-white">θ = cos⁻¹ [ Σ(Rᵢ·Lᵢ) / (√ΣRᵢ² · √ΣLᵢ²) ]</div>
+          <div class="sub">Semakin kecil sudut θ, semakin mirip spektrum piksel (Rᵢ) terhadap referensi (Lᵢ).</div>
+          <div class="text-emerald-300 font-bold pt-1">2. Nonlinear Spectral Mixture Analysis (NLSMA):</div>
+          <div class="text-white">A_alteration = Σ wᵢ · Fᵢ</div>
+          <div class="sub">Mengestimasi fraksi kelimpahan relatif mineral campuran nonlinier dalam 1 piksel.</div>
+        </div>
+
+        <!-- Sliders for Mineral Mixing Fractions Fi -->
+        <div class="space-y-2 border-t border-sky-900/60 pt-2">
+          <div class="lbl text-amber-300">Fraksi Campuran Mineral Piksel (Fᵢ) &amp; Bobot (wᵢ):</div>
+          <div>
+            <div class="flex justify-between font-mono text-[11px]"><span>Alunite (w=1.00)</span><b id="lbl_f_alu" class="text-rose-300">45%</b></div>
+            <input type="range" id="sl_f_alu" class="range" min="0" max="100" value="45" oninput="updateSpecSim()">
+          </div>
+          <div>
+            <div class="flex justify-between font-mono text-[11px]"><span>Pyrophyllite (w=0.95)</span><b id="lbl_f_pyr" class="text-emerald-300">25%</b></div>
+            <input type="range" id="sl_f_pyr" class="range" min="0" max="100" value="25" oninput="updateSpecSim()">
+          </div>
+          <div>
+            <div class="flex justify-between font-mono text-[11px]"><span>Kaolinite / Dickite (w=0.80)</span><b id="lbl_f_kao" class="text-sky-300">15%</b></div>
+            <input type="range" id="sl_f_kao" class="range" min="0" max="100" value="15" oninput="updateSpecSim()">
+          </div>
+          <div>
+            <div class="flex justify-between font-mono text-[11px]"><span>Quartz / Silisifikasi (w=0.90)</span><b id="lbl_f_qtz" class="text-purple-300">15%</b></div>
+            <input type="range" id="sl_f_qtz" class="range" min="0" max="100" value="15" oninput="updateSpecSim()">
+          </div>
+        </div>
+
+        <!-- SAM & NLSMA Results Box -->
+        <div id="samNlsmaOut" class="rounded-xl bg-slate-950/70 border border-amber-500/40 p-3 font-mono text-[11px] space-y-1.5"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= TAB 3: KORELASI MINERAL & VEKTOR GEOKIMIA ================= -->
+  <section id="s-geochem" class="ws-section space-y-4">
+    <div class="grid grid-cols-1 xl:grid-cols-12 gap-4">
+      <!-- 10 Spectral Minerals & Geochemical Vector Table -->
+      <div class="xl:col-span-7 cmd-card p-4 space-y-3">
+        <div class="flex flex-wrap items-center justify-between gap-2">
+          <h3 class="font-tech text-sm font-black text-amber-300"><i class="fa-solid fa-table mr-2"></i>KORELASI MINERAL SPEKTRAL DENGAN VEKTOR GEOKIMIA (10 MINERAL)</h3>
+          <input id="minSearch" class="inp" style="width:210px" placeholder="Cari mineral / unsur…" oninput="renderMineralTable()">
+        </div>
+        <div class="scroll-x rounded-xl border border-sky-900/50" style="max-height:470px;overflow:auto">
+          <table class="eng" id="mineralTable"></table>
+        </div>
+        <div class="rounded-lg bg-amber-950/35 border border-amber-500/40 p-2.5 font-mono text-[10.5px] text-amber-200">
+          <i class="fa-solid fa-triangle-exclamation mr-1.5 text-amber-400"></i><b>Catatan Penting:</b> <i>Enargite</i>, <i>luzonite</i>, dan sebagian sulfida tidak selalu terdeteksi jelas secara reflektansi optik/SWIR, sehingga verifikasi geokimia (ICP-MS/pXRF) dan petrografi sayatan poles wajib dilakukan.
+        </div>
+      </div>
+
+      <!-- Hypothesis Correlation Matrix & Geochemical Assay Simulator -->
+      <div class="xl:col-span-5 space-y-4">
+        <div class="cmd-card p-4 space-y-2.5">
+          <h3 class="font-tech text-sm font-black text-cyan-300"><i class="fa-solid fa-border-all mr-2"></i>MATRIKS KORELASI HIPOTESIS MINERAL – UNSUR</h3>
+          <div class="scroll-x rounded-xl border border-sky-900/50">
+            <table class="eng text-center" id="matrixTable"></table>
+          </div>
+          <div class="flex flex-wrap gap-3 font-mono text-[10px] text-slate-300 pt-1">
+            <span><b class="text-rose-400">++</b> : hubungan kuat</span>
+            <span><b class="text-amber-300">+</b> : positif</span>
+            <span><b class="text-sky-300">±</b> : tergantung konteks</span>
+            <span><b class="text-slate-400">0</b> : tidak signifikan</span>
+          </div>
+        </div>
+
+        <!-- Geochemical Pathfinder Simulator -->
+        <div class="cmd-card p-4 space-y-2.5">
+          <h3 class="font-tech text-sm font-black text-emerald-300"><i class="fa-solid fa-flask-vial mr-2"></i>SIMULATOR ANOMALI VEKTOR GEOKIMIA (PATHFINDER)</h3>
+          <div class="grid grid-cols-3 gap-2 font-mono">
+            <div><label class="lbl">Au (ppm)</label><input id="g_Au" type="number" step="0.1" value="1.8" class="inp" oninput="updateGeochemSim()"></div>
+            <div><label class="lbl">As (ppm)</label><input id="g_As" type="number" step="10" value="420" class="inp" oninput="updateGeochemSim()"></div>
+            <div><label class="lbl">Sb (ppm)</label><input id="g_Sb" type="number" step="5" value="65" class="inp" oninput="updateGeochemSim()"></div>
+            <div><label class="lbl">Hg (ppb)</label><input id="g_Hg" type="number" step="50" value="850" class="inp" oninput="updateGeochemSim()"></div>
+            <div><label class="lbl">Tl (ppm)</label><input id="g_Tl" type="number" step="0.5" value="4.2" class="inp" oninput="updateGeochemSim()"></div>
+            <div><label class="lbl">Cu (ppm)</label><input id="g_Cu" type="number" step="50" value="1150" class="inp" oninput="updateGeochemSim()"></div>
+          </div>
+          <div id="geochemOut" class="rounded-xl bg-slate-950/60 border border-emerald-500/40 p-3 font-mono text-[11px]"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= TAB 4: PEMODELAN INDEKS SGVI & PRIORITAS TARGET ================= -->
+  <section id="s-sgvi" class="ws-section space-y-4">
+    <div class="grid grid-cols-1 xl:grid-cols-12 gap-4">
+      <!-- SGVI Weight Tuner -->
+      <div class="xl:col-span-4 cmd-card p-4 space-y-3">
+        <h3 class="font-tech text-sm font-black text-amber-300"><i class="fa-solid fa-sliders mr-2"></i>KALIBRASI BOBOT INDEKS SGVI</h3>
+        <div class="rounded-xl bg-slate-950/60 border border-amber-500/40 p-3 font-mono text-xs text-center">
+          <div class="text-amber-300 font-black">SGVI = wₛ·S + wɢ·G + wᴛ·T + wʟ·L</div>
+          <div class="sub mt-1">Default: 0,30 S + 0,35 G + 0,25 T + 0,10 L</div>
+        </div>
+        <div id="sgviWeightSliders" class="space-y-2.5"></div>
+        <div class="flex gap-2">
+          <button class="btn btn-gh flex-1 justify-center" onclick="resetSgviWeights()"><i class="fa-solid fa-rotate-left"></i> RESET DEFAULT</button>
+          <button class="btn btn-em flex-1 justify-center" onclick="addProspectBlock()"><i class="fa-solid fa-plus"></i> TAMBAH BLOK</button>
+        </div>
+        <div class="sub leading-relaxed">
+          <b>S</b> = skor mineral alterasi spektral (SAM/NLSMA)<br>
+          <b>G</b> = skor anomali geokimia (Au-As-Sb-Hg-Tl-Cu)<br>
+          <b>T</b> = skor kerapatan struktur / rekahan<br>
+          <b>L</b> = skor kesesuaian litologi vulkanik-hidrotermal
+        </div>
+      </div>
+
+      <!-- Prospect Ranking Table & Chart -->
+      <div class="xl:col-span-8 space-y-4">
+        <div class="cmd-card p-4">
+          <h3 class="font-tech text-sm font-black text-cyan-300 mb-2"><i class="fa-solid fa-ranking-star mr-2"></i>MATRIKS SKORING PROSPEKTIVITAS BLOK EKSPLORASI (P1 – P4)</h3>
+          <div class="scroll-x rounded-xl border border-sky-900/50">
+            <table class="eng" id="sgviTable"></table>
+          </div>
+        </div>
+        <div class="cmd-card p-4">
+          <h3 class="font-tech text-sm font-black text-emerald-300 mb-2"><i class="fa-solid fa-chart-column mr-2"></i>PERBANDINGAN SKOR SGVI ANTAR BLOK PROSPEK</h3>
+          <canvas id="chSgviBar" class="ch" height="240"></canvas>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= TAB 5: RISALAH TEKNIS, WORKFLOW, SARAN & EKSPOR ================= -->
+  <section id="s-report" class="ws-section space-y-4">
+    <div class="cmd-card p-4 flex flex-wrap gap-2.5 items-center font-mono text-xs">
+      <button class="btn btn-acc" onclick="exportWord()"><i class="fa-solid fa-file-word"></i> UNDUH LAPORAN TEKNIS WORD (.doc)</button>
+      <button class="btn btn-pri" onclick="exportJSON()"><i class="fa-solid fa-file-code"></i> EKSPOR DATA JSON</button>
+      <button class="btn btn-em" onclick="exportCSV()"><i class="fa-solid fa-file-csv"></i> EKSPOR TABEL CSV</button>
+      <button class="btn btn-gh" onclick="window.print()"><i class="fa-solid fa-print"></i> CETAK / SIMPAN PDF</button>
+    </div>
+
+    <div class="cmd-card p-5 space-y-4">
+      <h3 class="font-tech text-base font-black text-amber-300"><i class="fa-solid fa-book-open mr-2"></i>RISALAH TEKNIS, WORKFLOW, POIN PENTING, SARAN &amp; KESIMPULAN</h3>
+      <div id="fullReportPreview" class="text-sm leading-relaxed space-y-4"></div>
+    </div>
+  </section>
+
+</div>
+
+<!-- FOOTER -->
+<footer class="relative z-10 text-center font-mono text-[10px] text-slate-400 pb-4 px-3">
+  © 2026 <b>HS-GOLD SPECTRAGEO PRO v1.0</b> · Dikembangkan oleh <b class="text-amber-300">Ir. Mohamad Hartadi, S.T.</b> · Konsultan: <b class="text-cyan-300">PT. Agrinas Palma Nusantara</b><br>
+  Blog: <a class="text-sky-300 underline" href="https://newbieonline7.blogspot.com/" target="_blank" rel="noopener">newbieonline7.blogspot.com</a> ·
+  Facebook: <a class="text-sky-300 underline" href="https://www.facebook.com/hartadi.kds" target="_blank" rel="noopener">facebook.com/hartadi.kds</a> ·
+  WhatsApp: <a class="text-emerald-300 underline" href="https://wa.me/6282231036047" target="_blank" rel="noopener">0822-3103-6047</a>
+</footer>
+
+<!-- ================= MODAL: MY APLIKASI (79 PROYEK) ================= -->
+<div class="modal-bg" id="mApps">
+  <div class="modal-box p-5">
+    <div class="flex justify-between items-center mb-3 gap-2 flex-wrap">
+      <h3 class="font-tech text-base font-black text-lime-300"><i class="fa-solid fa-cubes-stacked mr-2"></i>MY APLIKASI — <span id="appTotal">79</span> PROYEK IR. MOHAMAD HARTADI, S.T.</h3>
+      <div class="flex gap-2">
+        <input class="inp" style="width:220px" placeholder="Cari aplikasi…" id="appQ" oninput="renderApps()">
+        <button class="btn btn-gh" onclick="closeModal('mApps')">TUTUP ✕</button>
+      </div>
+    </div>
+    <div id="appChips" class="flex flex-wrap gap-1.5 mb-2"></div>
+    <div id="appCount" class="font-mono text-[11px] text-slate-400 mb-2"></div>
+    <div id="appList" class="grid sm:grid-cols-2 lg:grid-cols-3 gap-2.5"></div>
+  </div>
+</div>
+
+<!-- ================= MODAL: PENELITI / DEV ================= -->
+<div class="modal-bg" id="mCreator">
+  <div class="modal-box p-6" style="max-width:580px">
+    <div class="flex justify-between items-center mb-3">
+      <h3 class="font-tech text-base font-black text-amber-300">PROFIL PENELITI &amp; PENGEMBANG</h3>
+      <button class="btn btn-gh" onclick="closeModal('mCreator')">✕</button>
+    </div>
+    <div class="flex items-center gap-4 mb-4">
+      <div class="w-16 h-16 rounded-2xl bg-gradient-to-br from-amber-400 via-orange-500 to-cyan-500 flex items-center justify-center text-2xl text-slate-950 font-black font-tech shrink-0">MH</div>
+      <div>
+        <div class="font-tech font-black text-lg">Ir. Mohamad Hartadi, S.T.</div>
+        <div class="font-mono text-xs text-amber-300 font-bold">Konsultan: PT. Agrinas Palma Nusantara</div>
+        <div class="font-mono text-[11px] text-sky-300 mt-0.5">Insinyur Multidisiplin · Geosains &amp; Eksplorasi Mineral · Pengembang Sistem AI &amp; Rekayasa</div>
+      </div>
+    </div>
+    <div class="space-y-2 font-mono text-xs">
+      <a class="btn btn-pri w-full justify-start" href="https://newbieonline7.blogspot.com/" target="_blank" rel="noopener"><i class="fa-solid fa-blog"></i> Blog: https://newbieonline7.blogspot.com/</a>
+      <a class="btn btn-gh w-full justify-start" href="https://www.facebook.com/hartadi.kds" target="_blank" rel="noopener"><i class="fa-brands fa-facebook"></i> Facebook: https://www.facebook.com/hartadi.kds</a>
+      <a class="btn btn-em w-full justify-start" href="https://wa.me/6282231036047" target="_blank" rel="noopener"><i class="fa-brands fa-whatsapp"></i> WhatsApp: 0822-3103-6047</a>
+    </div>
+  </div>
+</div>
+
+<!-- ================= LAYER C: SCREENSAVER 3D BUMI NYATA ================= -->
+<div id="ssWrap" class="fixed inset-0 z-[30000] bg-slate-950 text-white hidden flex-col items-center justify-center select-none" onclick="toggleSS(false)">
+  <div id="ssEarthCanvas" class="absolute inset-0 w-full h-full"></div>
+  <div class="absolute inset-0 bg-[radial-gradient(circle_at_center,transparent_25%,rgba(1,6,12,.86)_100%)] pointer-events-none"></div>
+  <div class="relative z-10 text-center px-4 max-w-3xl pointer-events-none">
+    <div class="inline-block px-3 py-1 rounded-full bg-amber-500/20 border border-amber-400/50 font-mono text-[10px] text-amber-300 mb-2">HS-GOLD SPECTRAGEO PRO · ORBITAL EARTH MONITORING</div>
+    <div id="ssClock" class="font-tech font-black text-5xl sm:text-7xl text-transparent bg-clip-text bg-gradient-to-r from-amber-300 via-sky-300 to-emerald-300">00:00:00</div>
+    <div id="ssDate" class="font-mono text-sm sm:text-base text-sky-200 mt-1.5 font-bold"></div>
+    <div id="ssHijri" class="font-mono text-xs sm:text-sm text-emerald-300 mt-0.5 font-bold"></div>
+
+    <div id="ssCard" class="mt-6 cmd-card p-5 keepwhite" style="background:rgba(2,12,24,.82);border-color:rgba(34,211,238,.5)">
+      <div id="ssBadge" class="pill info mb-2"></div>
+      <div id="ssAr" class="font-arabic text-2xl sm:text-3xl text-amber-200 leading-loose" style="direction:rtl"></div>
+      <div id="ssLat" class="text-sky-200 italic text-xs mt-1"></div>
+      <div id="ssTx" class="text-slate-100 text-sm sm:text-base mt-2 leading-relaxed"></div>
+      <div id="ssSrc" class="font-mono text-[10px] text-amber-300 mt-2"></div>
+    </div>
+    <div class="font-mono text-[10px] text-slate-400 mt-4">Klik di mana saja atau tekan ESC untuk kembali ke Command Center</div>
+  </div>
+</div>
+
+<!-- ================= DOCK BUMI 3D + SMART CHATBOT ================= -->
+<div class="fixed bottom-4 left-4 z-[1050] flex items-center gap-1.5 bg-slate-950/90 backdrop-blur-md border border-sky-500/50 px-3 py-1.5 rounded-full shadow-2xl font-mono text-[11px] keepwhite no-print">
+  <span class="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
+  <span class="text-sky-300 font-bold hidden sm:inline mr-1">BUMI 3D:</span>
+  <button class="w-7 h-7 rounded-full bg-slate-800 hover:bg-sky-600 text-white font-bold border border-sky-500/40" onclick="zoomEarth(-5)" title="Perbesar">+</button>
+  <button class="w-7 h-7 rounded-full bg-slate-800 hover:bg-sky-600 text-white font-bold border border-sky-500/40" onclick="zoomEarth(5)" title="Perkecil">−</button>
+  <button class="w-7 h-7 rounded-full bg-slate-800 hover:bg-amber-600 text-amber-300 font-bold border border-amber-500/40" onclick="resetEarth()" title="Reset Posisi">⟲</button>
+</div>
+
+<!-- Floating Chatbot Trigger -->
+<button onclick="toggleChat()" class="fixed bottom-4 right-4 z-[1050] w-14 h-14 rounded-full bg-gradient-to-br from-amber-400 via-orange-500 to-purple-600 text-white text-xl shadow-2xl border-2 border-white/50 no-print flex items-center justify-center" style="animation:floatY 3.5s ease-in-out infinite" title="Chatbot Pintar Spektral & Geokimia">
+  <i class="fa-solid fa-robot"></i>
+</button>
+
+<!-- Chatbot Panel -->
+<div id="chatPanel" class="fixed bottom-20 right-4 z-[1051] w-[min(430px,calc(100vw-24px))] h-[min(590px,74vh)] rounded-2xl border-2 border-cyan-400/60 bg-slate-950/97 shadow-2xl hidden flex-col overflow-hidden keepwhite no-print">
+  <div class="px-3.5 py-2.5 bg-gradient-to-r from-indigo-900 via-sky-900 to-amber-900 flex items-center justify-between border-b border-cyan-500/50">
+    <div class="flex items-center gap-2">
+      <span class="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-ping"></span>
+      <div class="font-tech text-xs font-black text-white">SPECTRA-AI · CHATBOT GEOSAINS HS</div>
+    </div>
+    <button onclick="toggleChat()" class="text-slate-200 hover:text-amber-300 font-bold">✕</button>
+  </div>
+  <div id="chatBox" class="flex-1 overflow-y-auto p-3 space-y-2.5 text-slate-100"></div>
+  <div class="px-2.5 py-1.5 flex flex-wrap gap-1 bg-slate-900/80 border-t border-sky-900/50" id="chatChips"></div>
+  <div class="p-2.5 flex gap-2 border-t border-cyan-800/60 bg-slate-950">
+    <input id="chatIn" class="inp" placeholder="Tanya SAM, NLSMA, SGVI, Alunite, Enargite, SWIR…" onkeydown="if(event.key==='Enter')sendChat()">
+    <button class="btn btn-acc" onclick="sendChat()"><i class="fa-solid fa-paper-plane"></i></button>
+  </div>
+</div>
+
+<script>
+/* ============================================================================
+   HS-GOLD SPECTRAGEO PRO v1.0 — CORE DATA & SCIENTIFIC ENGINE
+   Pengembang: Ir. Mohamad Hartadi, S.T. | Konsultan: PT. Agrinas Palma Nusantara
+   ============================================================================ */
+const $ = id => document.getElementById(id);
+const fmt = (v, d=2) => (v===null||v===undefined||isNaN(v)) ? '—' : Number(v).toLocaleString('id-ID', {minimumFractionDigits:d, maximumFractionDigits:d});
+
+/* 1. DATABASE 10 MINERAL SPEKTRAL & VEKTOR GEOKIMIA (SESUAI INFOGRAFIS) */
+const MINERALS = [
+  { id:'ALU', name:'Alunite', formula:'KAl₃(SO₄)₂(OH)₆', vec:'S, As, Sb, Hg, Tl, ±Au', zone:'Advanced Argillic', swir:'1,42 µm, 1,48 µm, 1,76 µm, 2,17 µm (Al-OH & SO₄)', interp:'Indikator utama alterasi asam tinggi (advanced argillic); berasosiasi kuat dengan pusat sistem HS.', mat:{Au:'+',As:'++',Sb:'++',Hg:'++',Tl:'+',Cu:'0'} },
+  { id:'KAO', name:'Kaolinite / Dickite', formula:'Al₂Si₂O₅(OH)₄', vec:'Al, Si, S, As', zone:'Argilik / Adv. Argillic', swir:'1,40 µm & 2,165–2,205 µm doublet (Al-OH)', interp:'Alterasi argilik lanjut; umum berkembang pada zona atas sistem (lithocap).', mat:{Au:'±',As:'+',Sb:'0',Hg:'±',Tl:'0',Cu:'0'} },
+  { id:'PYR', name:'Pyrophyllite', formula:'Al₂Si₄O₁₀(OH)₂', vec:'Al, Si, S, As, ±Au', zone:'Advanced Argillic (Suhu Tinggi)', swir:'1,39 µm & tajam di 2,166 µm (Al-OH)', interp:'Alterasi asam kuat bersuhu relatif tinggi (>260°C); terletak dekat pusat up-flow.', mat:{Au:'+',As:'+',Sb:'+',Hg:'±',Tl:'±',Cu:'0'} },
+  { id:'DIA', name:'Diaspore', formula:'α-AlO(OH)', vec:'Al, ±As', zone:'Advanced Argillic Inti', swir:'1,80 µm & 2,17–2,21 µm (Al-OH)', interp:'Alterasi sangat asam (pH < 2) dan suhu tinggi pada inti hidrotermal.', mat:{Au:'±',As:'+',Sb:'±',Hg:'±',Tl:'±',Cu:'0'} },
+  { id:'QTZ', name:'Quartz (Silisifikasi)', formula:'SiO₂ (Vuggy Quartz)', vec:'Si, Au, As, Sb', zone:'Silisifikasi Inti', swir:'TIR 8,6–9,2 µm; SWIR featureless / OH fluida 1,4 & 1,9 µm', interp:'Zona silisifikasi masif (vuggy silica), sering membawa mineralisasi emas (Au) utama.', mat:{Au:'++',As:'+',Sb:'+',Hg:'±',Tl:'±',Cu:'±'} },
+  { id:'ENA', name:'Enargite', formula:'Cu₃AsS₄', vec:'Cu, As, S, Au', zone:'Zona Mineralisasi Utama', swir:'Reflektansi rendah (opak); butuh verifikasi geokimia & petrografi', interp:'Mineral sulfosalt khas sistem HS; indikator zona mineralisasi tembaga-emas utama.', mat:{Au:'+',As:'++',Sb:'++',Hg:'±',Tl:'+',Cu:'++'} },
+  { id:'LUZ', name:'Luzonite', formula:'Cu₃AsS₄ (Tetragonal)', vec:'Cu, As, S', zone:'Zona Mineralisasi Utama', swir:'Reflektansi rendah (opak); butuh verifikasi geokimia & petrografi', interp:'Mineral polimorf khas HS yang umum berasosiasi erat dengan enargite.', mat:{Au:'+',As:'++',Sb:'+',Hg:'±',Tl:'+',Cu:'++'} },
+  { id:'COV', name:'Covellite', formula:'CuS', vec:'Cu, S', zone:'Pengayaan Sulfida', swir:'Reflektansi rendah biru-indigo; indikasi pengayaan Cu', interp:'Sulfida tembaga sekunder/hipogen akhir pada zona mineralisasi HS.', mat:{Au:'±',As:'+',Sb:'±',Hg:'0',Tl:'0',Cu:'++'} },
+  { id:'JAR', name:'Jarosite', formula:'KFe³⁺₃(SO₄)₂(OH)₆', vec:'Fe, S, K', zone:'Zona Oksidasi Supergen', swir:'0,91 µm (Fe³⁺), 1,47 µm, 2,265 µm (Fe-OH)', interp:'Produk oksidasi asam; mengindikasikan pelapukan mineral sulfida (pyrite/enargite) di permukaan.', mat:{Au:'0',As:'+',Sb:'±',Hg:'+',Tl:'+',Cu:'0'} },
+  { id:'HEM', name:'Hematite / Goethite', formula:'Fe₂O₃ / FeO(OH)', vec:'Fe, ±As', zone:'Gossan / Batas Eksternal', swir:'VNIR 0,53 µm, 0,65 µm, 0,86–0,93 µm (crystal field Fe³⁺)', interp:'Oksidasi besi (iron cap/gossan); menandai batas sistem atau zona oksidasi eksternal.', mat:{Au:'±',As:'+',Sb:'±',Hg:'0',Tl:'0',Cu:'±'} }
+];
+
+/* 2. WAVELENGTH & REFERENCE REFLECTANCE CURVES (0.4 - 2.5 µm) */
+const WL = [];
+for (let w = 0.40; w <= 2.501; w += 0.025) WL.push(+w.toFixed(3));
+
+function gauss(x, mu, sig, amp) {
+  return amp * Math.exp(-0.5 * Math.pow((x - mu) / sig, 2));
+}
+
+// Synthetic realistic SWIR/VNIR spectra matching the infographic's spectral curve chart
+const REF_SPECTRA = {
+  Alunite: WL.map(w => {
+    let base = 0.44 + 0.24 * Math.sin((w - 0.35) * 1.45) - (w > 2.0 ? (w - 2.0) * 0.22 : 0);
+    base -= gauss(w, 1.42, 0.028, 0.22); // Al-OH ~1.40 µm
+    base -= gauss(w, 1.48, 0.022, 0.14);
+    base -= gauss(w, 1.76, 0.025, 0.11); // SO4 feature
+    base -= gauss(w, 1.91, 0.032, 0.23); // H2O/OH ~1.90 µm
+    base -= gauss(w, 2.17, 0.030, 0.31); // Al-OH ~2.17-2.21 µm
+    return Math.max(0.08, Math.min(0.85, base));
+  }),
+  Kaolinite: WL.map(w => {
+    let base = 0.35 + 0.20 * Math.sin((w - 0.35) * 1.35) - (w > 2.0 ? (w - 2.0) * 0.24 : 0);
+    base -= gauss(w, 1.40, 0.026, 0.16); // Al-OH ~1.40 µm
+    base -= gauss(w, 1.91, 0.035, 0.22); // ~1.90 µm
+    base -= gauss(w, 2.165, 0.018, 0.16); // doublet 1
+    base -= gauss(w, 2.205, 0.022, 0.27); // doublet 2 (~2.20 µm)
+    return Math.max(0.06, Math.min(0.82, base));
+  }),
+  Pyrophyllite: WL.map(w => {
+    let base = 0.30 + 0.17 * Math.sin((w - 0.35) * 1.35) - (w > 2.0 ? (w - 2.0) * 0.22 : 0);
+    base -= gauss(w, 1.395, 0.022, 0.15); // Al-OH ~1.40 µm
+    base -= gauss(w, 1.90, 0.030, 0.16);  // ~1.90 µm
+    base -= gauss(w, 2.168, 0.020, 0.26); // sharp Al-OH ~2.17 µm
+    return Math.max(0.06, Math.min(0.78, base));
+  }),
+  Quartz: WL.map(w => {
+    let base = 0.25 + 0.13 * Math.sin((w - 0.35) * 1.3) - (w > 2.1 ? (w - 2.1) * 0.16 : 0);
+    base -= gauss(w, 1.41, 0.035, 0.04); // weak fluid inclusion OH
+    base -= gauss(w, 1.91, 0.040, 0.08);
+    base -= gauss(w, 2.20, 0.045, 0.05);
+    return Math.max(0.05, Math.min(0.65, base));
+  })
+};
+
+/* 3. STATE & PRESETS */
+const STATE = {
+  preset: 'core',
+  xsMode: 'all',
+  bands: { emit: true, aster: false, s2: false },
+  mapLayers: { fault: true, sil: true },
+  mix: { alu: 45, pyr: 25, kao: 15, qtz: 15 },
+  geochem: { Au: 1.8, As: 420, Sb: 65, Hg: 850, Tl: 4.2, Cu: 1150 },
+  sgviWeights: { S: 0.30, G: 0.35, T: 0.25, L: 0.10 },
+  blocks: [
+    { id:'BLK-01', name:'Kawah Pusat (Vuggy Quartz Core)', lith:'Andesit-Dasit Terubah Kuat', min:'Quartz + Alunite + Enargite', S:0.92, G:0.94, T:0.88, L:0.90 },
+    { id:'BLK-02', name:'Punggungan Up-Flow Utara', lith:'Breksi Hidrotermal', min:'Alunite + Pyrophyllite', S:0.86, G:0.82, T:0.84, L:0.85 },
+    { id:'BLK-03', name:'Zona Sesar Timur (Luzonite-Cu)', lith:'Tuf Kristal Porfiritik', min:'Pyrophyllite + Quartz', S:0.74, G:0.78, T:0.80, L:0.75 },
+    { id:'BLK-04', name:'Sayap Lithocap Barat', lith:'Lava Andesit Piroksen', min:'Kaolinite / Dickite + Alunite', S:0.68, G:0.55, T:0.60, L:0.70 },
+    { id:'BLK-05', name:'Gossan Oksidasi Selatan', lith:'Breksi Vulkanik Teroksidasi', min:'Jarosite + Hematite', S:0.48, G:0.52, T:0.45, L:0.60 },
+    { id:'BLK-06', name:'Periferal Propilitik Luar', lith:'Andesit Segar-Propilitik', min:'Chlorite + Epidote', S:0.25, G:0.22, T:0.30, L:0.40 }
+  ],
+  sgviGrid: [],
+  faults: [],
+  silZones: []
+};
+
+const PRESETS = {
+  core: {
+    label: '1. Zona Inti Silisifikasi + Advanced Argillic',
+    mix: { alu: 45, pyr: 25, kao: 15, qtz: 15 },
+    geochem: { Au: 2.4, As: 510, Sb: 82, Hg: 980, Tl: 5.1, Cu: 1450 },
+    sgviWeights: { S: 0.30, G: 0.35, T: 0.25, L: 0.10 },
+    xsMode: 'all',
+    rec: 'Pemboran Inti (Diamond Drilling) Sudut 60° + Survei IP/Resistivitas'
+  },
+  lithocap: {
+    label: '2. Lithocap Tersingkap (Erosi Dangkal)',
+    mix: { alu: 50, pyr: 10, kao: 35, qtz: 5 },
+    geochem: { Au: 0.45, As: 290, Sb: 95, Hg: 1420, Tl: 6.4, Cu: 210 },
+    sgviWeights: { S: 0.35, G: 0.35, T: 0.20, L: 0.10 },
+    xsMode: 'geochem',
+    rec: 'Pemetaan SWIR Detail + Sampling Tanah Grid 50×50m (As-Sb-Hg-Tl)'
+  },
+  porphyry: {
+    label: '3. Sistem Porfiri-HS Dalam (Cu-Au)',
+    mix: { alu: 20, pyr: 50, kao: 10, qtz: 20 },
+    geochem: { Au: 1.65, As: 640, Sb: 40, Hg: 310, Tl: 2.3, Cu: 3850 },
+    sgviWeights: { S: 0.25, G: 0.35, T: 0.30, L: 0.10 },
+    xsMode: 'flow',
+    rec: 'Deep IP Chargeability + Magnetik + Pemboran Dalam (>400 m)'
+  },
+  supergene: {
+    label: '4. Zona Periferal / Oksidasi Supergen',
+    mix: { alu: 15, pyr: 10, kao: 55, qtz: 20 },
+    geochem: { Au: 0.18, As: 110, Sb: 18, Hg: 240, Tl: 1.1, Cu: 320 },
+    sgviWeights: { S: 0.30, G: 0.35, T: 0.25, L: 0.10 },
+    xsMode: 'drill',
+    rec: 'Verifikasi XRD & Petrografi (Pisahkan Hipogen vs Supergen)'
+  }
+};
+
+/* 4. QUANTITATIVE CALCULATIONS (SAM, NLSMA, GEOCHEM, SGVI) */
+function calcSAM(R, L) {
+  let dot = 0, normR = 0, normL = 0;
+  for (let i = 0; i < R.length; i++) {
+    dot += R[i] * L[i];
+    normR += R[i] * R[i];
+    normL += L[i] * L[i];
+  }
+  const cosT = Math.min(1, Math.max(-1, dot / (Math.sqrt(normR) * Math.sqrt(normL) + 1e-12)));
+  const rad = Math.acos(cosT);
+  return { rad, deg: rad * 180 / Math.PI, sim: cosT };
+}
+
+function getMixedSpectrum() {
+  const m = STATE.mix;
+  const sum = (m.alu + m.pyr + m.kao + m.qtz) || 1;
+  const fA = m.alu / sum, fP = m.pyr / sum, fK = m.kao / sum, fQ = m.qtz / sum;
+  // Nonlinear intimate mixture approximation (Hapke-like albedo mixing)
+  const R = WL.map((_, i) => {
+    const rLin = fA * REF_SPECTRA.Alunite[i] + fP * REF_SPECTRA.Pyrophyllite[i] + fK * REF_SPECTRA.Kaolinite[i] + fQ * REF_SPECTRA.Quartz[i];
+    const nonlin = 1 - 0.08 * (fA * fP + fP * fK + fA * fQ);
+    return Math.max(0.05, rLin * nonlin);
+  });
+  // NLSMA A_alteration = sum(wi * Fi)
+  const w = { alu: 1.00, pyr: 0.95, kao: 0.80, qtz: 0.90 };
+  const A_alt = w.alu * fA + w.pyr * fP + w.kao * fK + w.qtz * fQ;
+  const samList = Object.keys(REF_SPECTRA).map(k => ({ name: k, ...calcSAM(R, REF_SPECTRA[k]) })).sort((a, b) => a.rad - b.rad);
+  return { R, fractions: { fA, fP, fK, fQ }, A_alt, samList, bestMatch: samList[0] };
+}
+
+function calcGeochemScore() {
+  const g = STATE.geochem;
+  // Normalized pathfinder thresholds for HS epithermal systems
+  const sAu = Math.min(1, Math.log10(1 + g.Au * 4) / Math.log10(15));
+  const sAs = Math.min(1, Math.log10(1 + g.As / 25) / Math.log10(35));
+  const sSb = Math.min(1, Math.log10(1 + g.Sb / 5) / Math.log10(25));
+  const sHg = Math.min(1, Math.log10(1 + g.Hg / 50) / Math.log10(30));
+  const sTl = Math.min(1, Math.log10(1 + g.Tl * 2) / Math.log10(18));
+  const sCu = Math.min(1, Math.log10(1 + g.Cu / 100) / Math.log10(35));
+  const G_score = 0.25 * sAu + 0.22 * sAs + 0.18 * sSb + 0.15 * sHg + 0.08 * sTl + 0.12 * sCu;
+  return { G_score, sub: { sAu, sAs, sSb, sHg, sTl, sCu } };
+}
+
+function classifySGVI(val) {
+  if (val >= 0.75) return { code: 'P1', label: 'P1 (Sangat Tinggi)', cls: 'bad', color: '#dc2626' };
+  if (val >= 0.60) return { code: 'P2', label: 'P2 (Tinggi)', cls: 'warn', color: '#f97316' };
+  if (val >= 0.45) return { code: 'P3', label: 'P3 (Sedang)', cls: 'info', color: '#eab308' };
+  return { code: 'P4', label: 'P4 (Rendah)', cls: 'ok', color: '#22c55e' };
+}
+
+/* 5. KPI STRIP & PRESETS */
+function renderKPI() {
+  const spec = getMixedSpectrum();
+  const geo = calcGeochemScore();
+  const w = STATE.sgviWeights;
+  const wSum = (w.S + w.G + w.T + w.L) || 1;
+  const S_val = Math.min(1, spec.A_alt);
+  const G_val = geo.G_score;
+  const T_val = 0.85; // structural intersection factor
+  const L_val = 0.88; // volcanic host suitability
+  const sgvi = (w.S * S_val + w.G * G_val + w.T * T_val + w.L * L_val) / wSum;
+  const pClass = classifySGVI(sgvi);
+  const presetObj = PRESETS[STATE.preset];
+
+  const cards = [
+    ['① Sudut Spektral SAM (θ)', fmt(spec.bestMatch.rad, 3) + ' rad (' + fmt(spec.bestMatch.deg, 1) + '°)', 'Cocok: ' + spec.bestMatch.name, 'fa-compass-drafting', 'cyan'],
+    ['② Kelimpahan NLSMA', fmt(spec.A_alt * 100, 1) + '%', 'Alunite ' + Math.round(spec.fractions.fA*100) + '% · Pyr ' + Math.round(spec.fractions.fP*100) + '%', 'fa-layer-group', 'amber'],
+    ['③ Pathfinder Geokimia (G)', fmt(G_val, 3), 'Au ' + STATE.geochem.Au + ' ppm · As ' + STATE.geochem.As + ' ppm', 'fa-vial', 'emerald'],
+    ['④ Indeks Prospektivitas SGVI', fmt(sgvi, 3), '0,30S + 0,35G + 0,25T + 0,10L', 'fa-bullseye', 'rose'],
+    ['⑤ Klasifikasi Target', pClass.label, 'Prioritas Eksplorasi Lapangan', 'fa-ranking-star', 'amber'],
+    ['⑥ Rekomendasi Survei', presetObj.rec.split('+')[0].trim(), 'Validasi Geokimia & Geofisika IP', 'fa-drill', 'sky']
+  ];
+
+  const colMap = {
+    amber: 'text-amber-300 border-l-amber-500',
+    cyan: 'text-cyan-300 border-l-cyan-500',
+    emerald: 'text-emerald-300 border-l-emerald-500',
+    rose: 'text-rose-300 border-l-rose-500',
+    sky: 'text-sky-300 border-l-sky-500'
+  };
+
+  $('kpiRow').innerHTML = cards.map(c => `
+    <div class="cmd-card kpi border-l-4 ${colMap[c[4]].split(' ')[1]} fade-up">
+      <div class="flex justify-between gap-1 text-[10px] text-slate-400 font-bold uppercase">
+        <span class="lab">${c[0]}</span>
+        <i class="fa-solid ${c[3]} ${colMap[c[4]].split(' ')[0]} shrink-0"></i>
+      </div>
+      <div class="v ${colMap[c[4]].split(' ')[0]} mt-1">${c[1]}</div>
+      <span class="lab text-slate-400 block mt-0.5">${c[2]}</span>
+    </div>
+  `).join('');
+}
+
+function applyPreset(key) {
+  STATE.preset = key;
+  const P = PRESETS[key];
+  STATE.mix = { ...P.mix };
+  STATE.geochem = { ...P.geochem };
+  STATE.sgviWeights = { ...P.sgviWeights };
+  STATE.xsMode = P.xsMode;
+
+  ['core', 'lithocap', 'porphyry', 'supergene'].forEach(k => {
+    const btn = $('pr_' + k);
+    if (btn) btn.className = 'hdr-chip border font-bold ' + (k === key ? 'bg-sky-900 text-white border-sky-400 shadow-md' : 'bg-slate-800 text-slate-200 border-slate-700');
+  });
+
+  // Sync sliders if present
+  if ($('sl_f_alu')) {
+    $('sl_f_alu').value = STATE.mix.alu;
+    $('sl_f_pyr').value = STATE.mix.pyr;
+    $('sl_f_kao').value = STATE.mix.kao;
+    $('sl_f_qtz').value = STATE.mix.qtz;
+  }
+  ['Au','As','Sb','Hg','Tl','Cu'].forEach(el => {
+    if ($('g_' + el)) $('g_' + el).value = STATE.geochem[el];
+  });
+
+  renderAll();
+  toast('Skenario aktif: ' + P.label);
+}
+
+/* 6. TAB 1: CONCEPTUAL CROSS-SECTION SVG & SGVI 0-5 KM HEATMAP */
+function drawZonationSVG() {
+  const svg = $('xsSvg');
+  if (!svg) return;
+  const m = STATE.xsMode;
+
+  let o = `
+  <defs>
+    <radialGradient id="gHeat" cx="50%" cy="100%" r="60%">
+      <stop offset="0%" stop-color="#ef4444" stop-opacity="0.95"/>
+      <stop offset="55%" stop-color="#f97316" stop-opacity="0.75"/>
+      <stop offset="100%" stop-color="#7c2d12" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="gProp" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#84cc16" stop-opacity="0.78"/>
+      <stop offset="100%" stop-color="#3f6212" stop-opacity="0.92"/>
+    </linearGradient>
+    <linearGradient id="gArg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#fde047" stop-opacity="0.88"/>
+      <stop offset="100%" stop-color="#eab308" stop-opacity="0.92"/>
+    </linearGradient>
+    <linearGradient id="gAdv" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#fb7185" stop-opacity="0.92"/>
+      <stop offset="100%" stop-color="#e11d48" stop-opacity="0.95"/>
+    </linearGradient>
+    <linearGradient id="gSil" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#f5d0fe" stop-opacity="0.96"/>
+      <stop offset="100%" stop-color="#d946ef" stop-opacity="0.92"/>
+    </linearGradient>
+    <marker id="arrUp" viewBox="0 0 10 10" refX="5" refY="2" markerWidth="6" markerHeight="6" orient="auto">
+      <path d="M0 10 L5 0 L10 10 Z" fill="#fef08a"/>
+    </marker>
+  </defs>
+
+  <!-- Volcano / Edifice Topography -->
+  <path d="M40 460 L210 210 L420 115 L480 135 L540 115 L750 210 L920 460 Z" fill="#475569" stroke="#94a3b8" stroke-width="2"/>
+  <path d="M210 210 L420 115 L480 135 L540 115 L750 210 L690 230 L480 155 L270 230 Z" fill="#78350f" opacity="0.7"/>
+
+  <!-- Outer Propylitic Zone (Chlorite - Epidote | Cu - Fe - Mg) -->
+  <path d="M95 460 Q140 240 280 195 L680 195 Q820 240 865 460 Z" fill="url(#gProp)" stroke="#bef264" stroke-width="1.5"/>
+
+  <!-- Intermediate Argillic Zone (Kaolinite - Dickite | Al - Si - S) -->
+  <path d="M215 460 Q235 215 355 160 L605 160 Q725 215 745 460 Z" fill="url(#gArg)" stroke="#fef08a" stroke-width="1.5"/>
+
+  <!-- Core Advanced Argillic Zone (Alunite - Pyrophyllite - Diaspore | As - Sb - Hg - Au) -->
+  <path d="M335 460 Q345 190 425 132 L535 132 Q615 190 625 460 Z" fill="url(#gAdv)" stroke="#fda4af" stroke-width="2"/>
+
+  <!-- Apex Silicification / Vuggy Quartz Zone (Quartz ± Au) -->
+  <path d="M405 225 Q425 130 480 135 Q535 130 555 225 Q480 250 405 225 Z" fill="url(#gSil)" stroke="#f0abfc" stroke-width="2"/>
+
+  <!-- Deep Heat Source (Volcanic / Intrusion) -->
+  <path d="M250 530 Q350 410 480 410 Q610 410 710 530 Z" fill="url(#gHeat)"/>
+  <ellipse cx="480" cy="495" rx="210" ry="48" fill="#dc2626" opacity="0.88">
+    <animate attributeName="rx" values="205;222;205" dur="4s" repeatCount="indefinite"/>
+  </ellipse>
+  <text x="480" y="492" text-anchor="middle" fill="#fff" font-family="Orbitron" font-size="13" font-weight="900">SUMBER PANAS (VULKANIK / INTRUSI)</text>
+  <text x="480" y="510" text-anchor="middle" fill="#fde047" font-family="JetBrains Mono" font-size="10">Fluida Magmatik Asam Tinggi (SO₂, HCl, HF) &amp; Sulfidasi Tinggi</text>
+
+  <!-- Animated Up-Flow Fluid Arrows -->
+  <g stroke="#fef08a" stroke-width="2.5" fill="none">
+    <path d="M480 430 L480 245" stroke-dasharray="8 6">
+      <animate attributeName="stroke-dashoffset" from="28" to="0" dur="1.4s" repeatCount="indefinite"/>
+    </path>
+    <path d="M430 435 L395 270" stroke-dasharray="8 6">
+      <animate attributeName="stroke-dashoffset" from="28" to="0" dur="1.6s" repeatCount="indefinite"/>
+    </path>
+    <path d="M530 435 L565 270" stroke-dasharray="8 6">
+      <animate attributeName="stroke-dashoffset" from="28" to="0" dur="1.6s" repeatCount="indefinite"/>
+    </path>
+  </g>
+
+  <!-- Zone Labels -->
+  <g font-family="Inter" text-anchor="middle">
+    <!-- Silisifikasi -->
+    <rect x="415" y="152" width="130" height="54" rx="8" fill="rgba(15,23,42,0.78)" stroke="#f0abfc"/>
+    <text x="480" y="170" fill="#f5d0fe" font-size="12" font-weight="800">Silisifikasi</text>
+    <text x="480" y="185" fill="#fff" font-family="JetBrains Mono" font-size="10.5">(Quartz) ± Au</text>
+    <text x="480" y="199" fill="#fde047" font-family="JetBrains Mono" font-size="9.5">Vuggy Silica Core</text>
+
+    <!-- Advanced Argillic -->
+    <rect x="392" y="262" width="176" height="96" rx="10" fill="rgba(15,23,42,0.75)" stroke="#fda4af"/>
+    <text x="480" y="283" fill="#ffe4e6" font-size="13.5" font-weight="900">Advanced Argillic</text>
+    <text x="480" y="301" fill="#fecdd3" font-size="11">(Alunite – Pyrophyllite –</text>
+    <text x="480" y="316" fill="#fecdd3" font-size="11">Diaspore)</text>
+    <text x="480" y="336" fill="#fde047" font-family="JetBrains Mono" font-size="11.5" font-weight="800">As – Sb – Hg – Au</text>
+    <text x="480" y="350" fill="#bae6fd" font-family="JetBrains Mono" font-size="9">pH &lt; 2 · T = 220–320°C</text>
+
+    <!-- Argilik Left & Right -->
+    <rect x="235" y="275" width="102" height="74" rx="8" fill="rgba(15,23,42,0.76)" stroke="#fde047"/>
+    <text x="286" y="294" fill="#fef08a" font-size="12" font-weight="800">Argilik</text>
+    <text x="286" y="309" fill="#fff" font-size="10">(Kaolinite –</text>
+    <text x="286" y="322" fill="#fff" font-size="10">Dickite)</text>
+    <text x="286" y="338" fill="#7dd3fc" font-family="JetBrains Mono" font-size="10" font-weight="700">Al – Si – S</text>
+
+    <rect x="623" y="275" width="102" height="74" rx="8" fill="rgba(15,23,42,0.76)" stroke="#fde047"/>
+    <text x="674" y="294" fill="#fef08a" font-size="12" font-weight="800">Argilik</text>
+    <text x="674" y="309" fill="#fff" font-size="10">(Kaolinite –</text>
+    <text x="674" y="322" fill="#fff" font-size="10">Dickite)</text>
+    <text x="674" y="338" fill="#7dd3fc" font-family="JetBrains Mono" font-size="10" font-weight="700">Al – Si – S</text>
+
+    <!-- Propilitik Left & Right -->
+    <rect x="115" y="355" width="102" height="74" rx="8" fill="rgba(15,23,42,0.78)" stroke="#bef264"/>
+    <text x="166" y="374" fill="#d9f99d" font-size="12" font-weight="800">Propilitik</text>
+    <text x="166" y="389" fill="#fff" font-size="10">(Chlorite –</text>
+    <text x="166" y="402" fill="#fff" font-size="10">Epidote)</text>
+    <text x="166" y="418" fill="#fde047" font-family="JetBrains Mono" font-size="10" font-weight="700">Cu – Fe – Mg</text>
+
+    <rect x="743" y="355" width="102" height="74" rx="8" fill="rgba(15,23,42,0.78)" stroke="#bef264"/>
+    <text x="794" y="374" fill="#d9f99d" font-size="12" font-weight="800">Propilitik</text>
+    <text x="794" y="389" fill="#fff" font-size="10">(Chlorite –</text>
+    <text x="794" y="402" fill="#fff" font-size="10">Epidote)</text>
+    <text x="794" y="418" fill="#fde047" font-family="JetBrains Mono" font-size="10" font-weight="700">Cu – Fe – Mg</text>
+  </g>
+  `;
+
+  // Overlay mode enhancements
+  if (m === 'drill') {
+    o += `
+    <g stroke="#22d3ee" stroke-width="2.5" stroke-dasharray="6 4">
+      <line x1="340" y1="165" x2="495" y2="375"/>
+      <line x1="620" y1="165" x2="465" y2="375"/>
+    </g>
+    <rect x="275" y="135" width="115" height="24" rx="5" fill="#0284c7"/>
+    <text x="332" y="151" text-anchor="middle" fill="#fff" font-family="JetBrains Mono" font-size="10" font-weight="800">DDH-01 (Az 090°)</text>
+    <rect x="570" y="135" width="115" height="24" rx="5" fill="#0284c7"/>
+    <text x="627" y="151" text-anchor="middle" fill="#fff" font-family="JetBrains Mono" font-size="10" font-weight="800">DDH-02 (Az 270°)</text>
+    `;
+  } else if (m === 'geochem') {
+    o += `
+    <rect x="30" y="22" width="320" height="68" rx="8" fill="rgba(2,12,24,0.86)" stroke="#fbbf24"/>
+    <text x="42" y="42" fill="#fbbf24" font-family="JetBrains Mono" font-size="11" font-weight="800">VEKTOR PATHFINDER VERTIKAL:</text>
+    <text x="42" y="59" fill="#e2e8f0" font-family="JetBrains Mono" font-size="10">Atas (Lithocap): Hg – Sb – Tl – As tinggi</text>
+    <text x="42" y="75" fill="#6ee7b7" font-family="JetBrains Mono" font-size="10">Inti / Bawah: Au – Cu (Enargite/Luzonite)</text>
+    `;
+  }
+
+  o += `<text x="20" y="528" fill="#7dd3fc" font-family="JetBrains Mono" font-size="10">Penampang Konseptual Sistem Epithermal High-Sulfidation (HS) · Skenario: ${PRESETS[STATE.preset].label}</text>`;
+  svg.innerHTML = o;
+
+  $('xsModes').innerHTML = [
+    ['all', 'ZONASI LENGKAP'],
+    ['geochem', 'VEKTOR GEOKIMIA'],
+    ['drill', 'TARGET PEMBORAN']
+  ].map(([k, label]) => `<button class="btn ${STATE.xsMode===k?'btn-acc':'btn-gh'}" style="padding:4px 9px" onclick="STATE.xsMode='${k}';drawZonationSVG()">${label}</button>`).join('');
+
+  $('xsLegend').innerHTML = [
+    '<span style="color:#f5d0fe">■ Silisifikasi (Quartz ±Au)</span>',
+    '<span style="color:#fb7185">■ Advanced Argillic (Alunite-Pyrophyllite-Diaspore)</span>',
+    '<span style="color:#fde047">■ Argilik (Kaolinite-Dickite)</span>',
+    '<span style="color:#bef264">■ Propilitik (Chlorite-Epidote)</span>'
+  ].join('');
+}
+
+/* SGVI 0 - 5 KM SPATIAL HEATMAP */
+function regenSgviMap() {
+  const cols = 48, rows = 36;
+  const grid = [];
+  // Two main NE-SW structural corridors creating P1 core anomaly
+  const seedShift = (Math.random() - 0.5) * 0.08;
+  for (let r = 0; r < rows; r++) {
+    const row = [];
+    const ny = r / (rows - 1); // 0 top (North) to 1 bottom (South)
+    for (let c = 0; c < cols; c++) {
+      const nx = c / (cols - 1); // 0 left (West) to 1 right (East)
+      // Distance to NE-SW mineralized corridor passing through (0.42, 0.48)
+      const dx = nx - 0.42, dy = ny - 0.48;
+      // Rotate coordinates by -38 deg to align NE-SW
+      const ang = -38 * Math.PI / 180;
+      const rx = dx * Math.cos(ang) - dy * Math.sin(ang);
+      const ry = dx * Math.sin(ang) + dy * Math.cos(ang);
+      const coreDist = Math.sqrt((rx * 2.6) ** 2 + (ry * 1.35) ** 2);
+      const secDist = Math.sqrt(((nx - 0.65) * 3.2) ** 2 + ((ny - 0.30) * 3.2) ** 2);
+
+      let val = 0.25 + 0.68 * Math.exp(-coreDist * coreDist * 2.4) + 0.32 * Math.exp(-secDist * secDist * 4.5);
+      val += 0.07 * Math.sin(nx * 14 + ny * 9) + 0.05 * Math.cos(nx * 21 - ny * 17) + seedShift;
+      val = Math.max(0.12, Math.min(0.96, val));
+      row.push(val);
+    }
+    grid.push(row);
+  }
+  STATE.sgviGrid = grid;
+  STATE.faults = [
+    [[0.14, 0.85], [0.76, 0.14]], // Main NE-SW controlling fault
+    [[0.36, 0.94], [0.92, 0.42]], // Parallel SE fault
+    [[0.22, 0.28], [0.64, 0.72]]  // Conjugate NW-SE cross structure
+  ];
+  STATE.silZones = [
+    { cx: 0.41, cy: 0.49, rx: 0.12, ry: 0.19, rot: 0.55, label: 'Zona Silisifikasi Inti' },
+    { cx: 0.64, cy: 0.31, rx: 0.07, ry: 0.09, rot: 0.3, label: 'Satelit Silika Timur' }
+  ];
+  drawSgviMap();
+}
+
+function toggleSgviLayer(layer) {
+  STATE.mapLayers[layer] = !STATE.mapLayers[layer];
+  drawSgviMap();
+}
+
+function drawSgviMap() {
+  const cv = $('sgviMapCanvas');
+  if (!cv) return;
+  if (!STATE.sgviGrid.length) regenSgviMap();
+
+  const dpr = Math.min(2, window.devicePixelRatio || 1);
+  const w = cv.clientWidth || 500;
+  const h = 340;
+  cv.width = w * dpr;
+  cv.height = h * dpr;
+  const ctx = cv.getContext('2d');
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+  const grid = STATE.sgviGrid;
+  const rows = grid.length, cols = grid[0].length;
+  const cw = w / cols, ch = h / rows;
+
+  // Color ramp: P4 green -> P3 yellow -> P2 orange -> P1 red
+  function sgviColor(v) {
+    if (v >= 0.75) return '#dc2626'; // P1 Sangat Tinggi
+    if (v >= 0.66) return '#ea580c';
+    if (v >= 0.60) return '#f97316'; // P2 Tinggi
+    if (v >= 0.52) return '#facc15';
+    if (v >= 0.45) return '#eab308'; // P3 Sedang
+    if (v >= 0.36) return '#84cc16';
+    return '#16a34a'; // P4 Rendah
+  }
+
+  for (let r = 0; r < rows; r++) {
+    for (let c = 0; c < cols; c++) {
+      ctx.fillStyle = sgviColor(grid[r][c]);
+      ctx.fillRect(Math.floor(c * cw), Math.floor(r * ch), Math.ceil(cw) + 1, Math.ceil(ch) + 1);
+    }
+  }
+
+  // Subtle coordinate grid
+  ctx.strokeStyle = 'rgba(15,23,42,0.18)';
+  ctx.lineWidth = 1;
+  for (let i = 1; i < 5; i++) {
+    ctx.beginPath(); ctx.moveTo(w * i / 5, 0); ctx.lineTo(w * i / 5, h); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(0, h * i / 5); ctx.lineTo(w, h * i / 5); ctx.stroke();
+  }
+
+  // Silicification dashed contours
+  if (STATE.mapLayers.sil) {
+    STATE.silZones.forEach(z => {
+      ctx.save();
+      ctx.translate(z.cx * w, z.cy * h);
+      ctx.rotate(z.rot);
+      ctx.strokeStyle = '#0f172a';
+      ctx.lineWidth = 2.2;
+      ctx.setLineDash([5, 4]);
+      ctx.beginPath();
+      ctx.ellipse(0, 0, z.rx * w, z.ry * h, 0, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.strokeStyle = '#ffffff';
+      ctx.lineWidth = 1;
+      ctx.stroke();
+      ctx.restore();
+    });
+  }
+
+  // Faults / fractures
+  if (STATE.mapLayers.fault) {
+    STATE.faults.forEach(f => {
+      ctx.save();
+      ctx.strokeStyle = '#090d16';
+      ctx.lineWidth = 2.4;
+      ctx.setLineDash([8, 5]);
+      ctx.beginPath();
+      ctx.moveTo(f[0][0] * w, f[0][1] * h);
+      ctx.lineTo(f[1][0] * w, f[1][1] * h);
+      ctx.stroke();
+      ctx.restore();
+    });
+  }
+
+  // North Arrow (Top Right)
+  ctx.save();
+  ctx.fillStyle = 'rgba(2,12,24,0.82)';
+  ctx.beginPath(); ctx.roundRect(w - 46, 10, 36, 46, 8); ctx.fill();
+  ctx.fillStyle = '#fbbf24'; ctx.font = 'bold 11px Orbitron'; ctx.textAlign = 'center';
+  ctx.fillText('N', w - 28, 24);
+  ctx.strokeStyle = '#fff'; ctx.lineWidth = 2;
+  ctx.beginPath(); ctx.moveTo(w - 28, 48); ctx.lineTo(w - 28, 29); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(w - 33, 35); ctx.lineTo(w - 28, 28); ctx.lineTo(w - 23, 35); ctx.stroke();
+  ctx.restore();
+
+  // Scale Bar (Bottom Right: 0 - 2.5 - 5 km)
+  ctx.save();
+  const sbW = 110, sbX = w - sbW - 14, sbY = h - 32;
+  ctx.fillStyle = 'rgba(2,12,24,0.85)';
+  ctx.beginPath(); ctx.roundRect(sbX - 8, sbY - 12, sbW + 16, 34, 7); ctx.fill();
+  ctx.fillStyle = '#fff'; ctx.fillRect(sbX, sbY, sbW / 2, 5);
+  ctx.fillStyle = '#f59e0b'; ctx.fillRect(sbX + sbW / 2, sbY, sbW / 2, 5);
+  ctx.fillStyle = '#e2e8f0'; ctx.font = '9px JetBrains Mono'; ctx.textAlign = 'center';
+  ctx.fillText('0', sbX, sbY + 16);
+  ctx.fillText('2,5', sbX + sbW / 2, sbY + 16);
+  ctx.fillText('5 km', sbX + sbW, sbY + 16);
+  ctx.restore();
+}
+
+function bindSgviMapEvents() {
+  const cv = $('sgviMapCanvas');
+  if (!cv) return;
+  const inspect = e => {
+    const rect = cv.getBoundingClientRect();
+    const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+    const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+    const nx = Math.max(0, Math.min(0.999, (clientX - rect.left) / rect.width));
+    const ny = Math.max(0, Math.min(0.999, (clientY - rect.top) / rect.height));
+    const grid = STATE.sgviGrid;
+    if (!grid.length) return;
+    const r = Math.floor(ny * grid.length);
+    const c = Math.floor(nx * grid[0].length);
+    const val = grid[r][c];
+    const p = classifySGVI(val);
+    const easting = (462000 + nx * 5000).toFixed(0);
+    const northing = (9258000 + (1 - ny) * 5000).toFixed(0);
+    const minDom = val >= 0.75 ? 'Quartz (Silisifikasi) + Alunite + Enargite' : val >= 0.60 ? 'Alunite + Pyrophyllite' : val >= 0.45 ? 'Kaolinite / Dickite' : 'Chlorite + Epidote';
+    $('mapInspectBox').innerHTML = `
+      <div class="flex flex-wrap items-center justify-between gap-2">
+        <span><b class="text-cyan-300">UTM 49S:</b> ${easting} E, ${northing} N (${(nx*5).toFixed(2)} km, ${((1-ny)*5).toFixed(2)} km)</span>
+        <span class="pill ${p.cls}">SGVI = ${fmt(val, 3)} · ${p.label}</span>
+      </div>
+      <div class="text-slate-300 mt-1"><b>Asosiasi Mineral Dominan:</b> ${minDom}</div>
+    `;
+  };
+  cv.addEventListener('click', inspect);
+  cv.addEventListener('mousemove', e => { if (e.buttons === 1) inspect(e); });
+}
+
+function renderInsights() {
+  const spec = getMixedSpectrum();
+  const geo = calcGeochemScore();
+  const items = [
+    ['fa-wave-square', 'cyan', `<b>Deteksi SWIR Al–OH:</b> Mineral <i>Alunite</i>, <i>Kaolinite</i>, dan <i>Pyrophyllite</i> terdeteksi kuat pada fitur serapan ~1,40 µm, ~1,90 µm, dan ~2,17–2,21 µm. Kecocokan SAM tertinggi saat ini: <b>${spec.bestMatch.name}</b> (θ = ${fmt(spec.bestMatch.deg, 1)}°).`],
+    ['fa-vial-circle-check', 'amber', `<b>Vektor Geokimia Pathfinder:</b> Pengayaan <b>Au (${STATE.geochem.Au} ppm), As (${STATE.geochem.As} ppm), Sb (${STATE.geochem.Sb} ppm), Hg (${STATE.geochem.Hg} ppb), Tl (${STATE.geochem.Tl} ppm), dan Cu (${STATE.geochem.Cu} ppm)</b> mengonfirmasi jalur fluida hidrotermal asam tinggi.`],
+    ['fa-bullseye', 'rose', `<b>Fokus Target P1 (Sangat Tinggi):</b> Prioritaskan eksplorasi pada perpotongan zona <i>advanced argillic</i> dan silisifikasi masif (<i>vuggy quartz</i>) dengan struktur sesar NE–SW sebagai target utama pemboran.`],
+    ['fa-microscope', 'emerald', `<b>Verifikasi Sulfida Opak:</b> <i>Enargite</i> dan <i>luzonite</i> memiliki reflektansi rendah pada spektrum optik/SWIR, sehingga kombinasi data geokimia batuan dan petrografi sayatan poles mutlak diperlukan.`],
+    ['fa-layer-group', 'purple', `<b>Unmixing Nonlinier (NLSMA):</b> Kelimpahan alterasi piksel campuran mencapai <b>${fmt(spec.A_alt * 100, 1)}%</b>, membantu memisahkan inti <i>up-flow</i> bersuhu tinggi dari halo argilik luar.`],
+    ['fa-compass', 'sky', `<b>Dasar Survei Lanjutan:</b> Peta indeks SGVI menjadi dasar objektif penentuan lintasan geofisika <b>IP / Resistivitas</b>, sampling geokimia rinci, dan titik bor eksplorasi.`]
+  ];
+  $('insights').innerHTML = items.map(it => `
+    <div class="rounded-xl border border-sky-900/60 bg-slate-950/45 p-3 fade-up">
+      <i class="fa-solid ${it[0]} text-${it[1]}-400 mr-1.5"></i>
+      <span class="text-slate-200">${it[2]}</span>
+    </div>
+  `).join('');
+}
+
+/* 7. TAB 2: SPECTRAL CHART, SAM & NLSMA */
+function toggleSensorBand(b) {
+  STATE.bands[b] = !STATE.bands[b];
+  const btnMap = { emit: 'btnBandEMIT', aster: 'btnBandASTER', s2: 'btnBandS2' };
+  const btn = $(btnMap[b]);
+  if (btn) btn.className = 'btn ' + (STATE.bands[b] ? 'btn-acc' : 'btn-gh');
+  drawSpectralChart();
+}
+
+function drawSpectralChart() {
+  const cv = $('chSpec');
+  if (!cv) return;
+  const dpr = Math.min(2, window.devicePixelRatio || 1);
+  const host = cv.parentElement;
+  const w = Math.max(300, host ? host.clientWidth - 32 : 640);
+  const h = 330;
+  cv.style.width = '100%';
+  cv.style.height = h + 'px';
+  cv.width = w * dpr;
+  cv.height = h * dpr;
+  const c = cv.getContext('2d');
+  c.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+  const isDark = document.documentElement.classList.contains('dark');
+  const txCol = isDark ? '#cbd5e1' : '#1e293b';
+  const gridCol = isDark ? 'rgba(148,163,184,0.16)' : 'rgba(30,41,59,0.16)';
+  const m = { l: 48, r: 16, t: 38, b: 36 };
+  const xmin = 0.4, xmax = 2.5, ymin = 0.0, ymax = 0.85;
+  const X = x => m.l + (x - xmin) / (xmax - xmin) * (w - m.l - m.r);
+  const Y = y => m.t + (1 - (y - ymin) / (ymax - ymin)) * (h - m.t - m.b);
+
+  // Sensor Band Overlays
+  if (STATE.bands.emit) {
+    c.fillStyle = 'rgba(34,211,238,0.08)';
+    c.fillRect(X(0.4), m.t, X(2.5) - X(0.4), h - m.t - m.b);
+    c.fillStyle = '#22d3ee'; c.font = '9px JetBrains Mono'; c.textAlign = 'right';
+    c.fillText('EMIT Continuous Hyperspectral (380–2500 nm)', w - m.r - 4, h - m.b - 6);
+  }
+  if (STATE.bands.aster) {
+    [1.65, 2.165, 2.205, 2.26, 2.33, 2.395].forEach(bw => {
+      c.fillStyle = 'rgba(245,158,11,0.18)';
+      c.fillRect(X(bw - 0.02), m.t, X(bw + 0.02) - X(bw - 0.02), h - m.t - m.b);
+    });
+  }
+  if (STATE.bands.s2) {
+    [0.49, 0.56, 0.665, 0.842, 1.61, 2.19].forEach(bw => {
+      c.fillStyle = 'rgba(168,85,247,0.16)';
+      c.fillRect(X(bw - 0.03), m.t, X(bw + 0.03) - X(bw - 0.03), h - m.t - m.b);
+    });
+  }
+
+  // Axes & Grid
+  c.font = '10px JetBrains Mono';
+  for (let i = 0; i <= 4; i++) {
+    const yv = ymin + (ymax - ymin) * i / 4;
+    const yy = Y(yv);
+    c.strokeStyle = gridCol; c.beginPath(); c.moveTo(m.l, yy); c.lineTo(w - m.r, yy); c.stroke();
+    c.fillStyle = txCol; c.textAlign = 'right'; c.fillText(yv.toFixed(1), m.l - 6, yy + 3);
+  }
+  [0.5, 1.0, 1.5, 2.0, 2.5].forEach(xv => {
+    const xx = X(xv);
+    c.strokeStyle = gridCol; c.beginPath(); c.moveTo(xx, m.t); c.lineTo(xx, h - m.b); c.stroke();
+    c.fillStyle = txCol; c.textAlign = 'center'; c.fillText(xv.toFixed(1), xx, h - m.b + 14);
+  });
+
+  // Axis Labels
+  c.fillStyle = '#38bdf8'; c.textAlign = 'center';
+  c.fillText('Panjang Gelombang (µm)', (m.l + w - m.r) / 2, h - 4);
+  c.save(); c.translate(13, (m.t + h - m.b) / 2); c.rotate(-Math.PI / 2);
+  c.fillText('Reflektansi', 0, 0); c.restore();
+
+  // Diagnostic Al-OH Absorption Feature Vertical Dashed Lines (~1.40, ~1.90, ~2.17-2.21 µm)
+  const feats = [
+    { x: 1.40, label: '~1.40 µm', sub: '(Al-OH)' },
+    { x: 1.90, label: '~1.90 µm', sub: '(Al-OH)' },
+    { x: 2.19, label: '~2.17–2.21 µm', sub: '(Al-OH)' }
+  ];
+  feats.forEach(f => {
+    const xx = X(f.x);
+    c.save();
+    c.strokeStyle = '#fb7185';
+    c.lineWidth = 1.4;
+    c.setLineDash([4, 4]);
+    c.beginPath(); c.moveTo(xx, m.t); c.lineTo(xx, h - m.b); c.stroke();
+    c.fillStyle = '#fda4af';
+    c.font = 'bold 9.5px JetBrains Mono';
+    c.textAlign = 'center';
+    c.fillText(f.label, xx, m.t - 16);
+    c.fillStyle = '#94a3b8';
+    c.fillText(f.sub, xx, m.t - 5);
+    c.restore();
+  });
+
+  // Draw Mineral Curves
+  const mix = getMixedSpectrum();
+  const curves = [
+    { name: 'Alunite', data: REF_SPECTRA.Alunite, color: '#ef4444', width: 2.3, dash: [] },
+    { name: 'Kaolinite', data: REF_SPECTRA.Kaolinite, color: '#3b82f6', width: 2.2, dash: [] },
+    { name: 'Pyrophyllite', data: REF_SPECTRA.Pyrophyllite, color: '#22c55e', width: 2.2, dash: [] },
+    { name: 'Quartz', data: REF_SPECTRA.Quartz, color: '#a855f7', width: 2.0, dash: [] },
+    { name: 'Piksel Campuran (NLSMA)', data: mix.R, color: '#fbbf24', width: 2.6, dash: [6, 3] }
+  ];
+
+  curves.forEach(cvItem => {
+    c.save();
+    c.strokeStyle = cvItem.color;
+    c.lineWidth = cvItem.width;
+    c.setLineDash(cvItem.dash);
+    c.beginPath();
+    WL.forEach((wv, idx) => {
+      const px = X(wv), py = Y(cvItem.data[idx]);
+      idx === 0 ? c.moveTo(px, py) : c.lineTo(px, py);
+    });
+    c.stroke();
+    c.restore();
+  });
+
+  // Legend Box inside chart (Bottom Left)
+  const lx = m.l + 10, ly = h - m.b - 78;
+  c.fillStyle = isDark ? 'rgba(2,12,24,0.82)' : 'rgba(255,255,255,0.88)';
+  c.strokeStyle = 'rgba(56,189,248,0.35)';
+  c.lineWidth = 1;
+  c.beginPath(); c.roundRect(lx, ly, 168, 72, 6); c.fill(); c.stroke();
+  curves.forEach((cvItem, i) => {
+    const yy = ly + 13 + i * 13;
+    c.strokeStyle = cvItem.color; c.lineWidth = 2.2; c.setLineDash(cvItem.dash);
+    c.beginPath(); c.moveTo(lx + 8, yy - 3); c.lineTo(lx + 24, yy - 3); c.stroke(); c.setLineDash([]);
+    c.fillStyle = txCol; c.font = '9.5px JetBrains Mono'; c.textAlign = 'left';
+    c.fillText(cvItem.name, lx + 29, yy);
+  });
+}
+
+function updateSpecSim() {
+  STATE.mix.alu = +$('sl_f_alu').value;
+  STATE.mix.pyr = +$('sl_f_pyr').value;
+  STATE.mix.kao = +$('sl_f_kao').value;
+  STATE.mix.qtz = +$('sl_f_qtz').value;
+
+  const res = getMixedSpectrum();
+  $('lbl_f_alu').textContent = Math.round(res.fractions.fA * 100) + '%';
+  $('lbl_f_pyr').textContent = Math.round(res.fractions.fP * 100) + '%';
+  $('lbl_f_kao').textContent = Math.round(res.fractions.fK * 100) + '%';
+  $('lbl_f_qtz').textContent = Math.round(res.fractions.fQ * 100) + '%';
+
+  $('samNlsmaOut').innerHTML = `
+    <div class="flex justify-between"><span class="text-slate-400">Kelimpahan NLSMA (A_alt):</span><b class="text-emerald-300">${fmt(res.A_alt * 100, 1)}%</b></div>
+    <div class="flex justify-between"><span class="text-slate-400">Kecocokan SAM Terbaik:</span><b class="text-amber-300">${res.bestMatch.name} (θ = ${fmt(res.bestMatch.rad, 3)} rad)</b></div>
+    <div class="border-t border-slate-800 pt-1.5 mt-1 space-y-1">
+      ${res.samList.map(s => `
+        <div class="flex justify-between text-[10px]">
+          <span>${s.name}</span>
+          <span>θ = ${fmt(s.deg, 1)}° · kemiripan ${fmt(s.sim * 100, 1)}%</span>
+        </div>
+      `).join('')}
+    </div>
+  `;
+  drawSpectralChart();
+  renderKPI();
+}
+
+/* 8. TAB 3: MINERAL TABLE, HYPOTHESIS MATRIX & GEOCHEM SIMULATOR */
+function renderMineralTable() {
+  const q = ($('minSearch')?.value || '').toLowerCase();
+  const rows = MINERALS.filter(m => !q || (m.name + ' ' + m.vec + ' ' + m.interp + ' ' + m.zone).toLowerCase().includes(q));
+  $('mineralTable').innerHTML = `
+    <thead>
+      <tr>
+        <th>Mineral (Spektral)</th>
+        <th>Vektor Geokimia Terkait</th>
+        <th>Zona Alterasi</th>
+        <th>Fitur Spektral &amp; Interpretasi pada Sistem HS</th>
+      </tr>
+    </thead>
+    <tbody>
+      ${rows.map(m => `
+        <tr>
+          <td class="font-black text-amber-300" style="min-width:140px">${m.name}<div class="sub">${m.formula}</div></td>
+          <td class="font-bold text-cyan-300" style="min-width:130px">${m.vec}</td>
+          <td><span class="pill info">${m.zone}</span></td>
+          <td style="font-family:Inter;min-width:240px" class="text-slate-200">
+            <div>${m.interp}</div>
+            <div class="sub mt-0.5 text-emerald-300/90">Diagnostik: ${m.swir}</div>
+          </td>
+        </tr>
+      `).join('')}
+    </tbody>
+  `;
+}
+
+function renderMatrixTable() {
+  const elems = ['Au', 'As', 'Sb', 'Hg', 'Tl', 'Cu'];
+  const matrixMinerals = MINERALS.filter(m => m.id !== 'COV');
+  const badge = v => {
+    if (v === '++') return '<span class="pill bad">++</span>';
+    if (v === '+') return '<span class="pill warn">+</span>';
+    if (v === '±') return '<span class="pill info">±</span>';
+    return '<span class="text-slate-500 font-bold">0</span>';
+  };
+  $('matrixTable').innerHTML = `
+    <thead>
+      <tr>
+        <th style="text-align:left">Mineral / Indikator</th>
+        ${elems.map(e => `<th style="text-align:center">${e}</th>`).join('')}
+      </tr>
+    </thead>
+    <tbody>
+      ${matrixMinerals.map(m => `
+        <tr>
+          <td style="text-align:left" class="font-bold text-amber-200">${m.name.split(' ')[0]}</td>
+          ${elems.map(e => `<td style="text-align:center">${badge(m.mat[e])}</td>`).join('')}
+        </tr>
+      `).join('')}
+    </tbody>
+  `;
+}
+
+function updateGeochemSim() {
+  ['Au','As','Sb','Hg','Tl','Cu'].forEach(el => {
+    const inp = $('g_' + el);
+    if (inp) STATE.geochem[el] = Math.max(0, parseFloat(inp.value) || 0);
+  });
+  const res = calcGeochemScore();
+  const status = res.G_score >= 0.75 ? ['ANOMALI INTI HS (SANGAT KUAT)', 'bad'] : res.G_score >= 0.55 ? ['ANOMALI SIGNIFIKAN (TARGET LANJUT)', 'warn'] : ['LATAR / PERIFERAL RENDAH', 'ok'];
+  $('geochemOut').innerHTML = `
+    <div class="flex items-center justify-between gap-2 mb-1.5">
+      <span>Skor Vektor Geokimia (G): <b class="text-emerald-300 text-sm">${fmt(res.G_score, 3)}</b></span>
+      <span class="pill ${status[1]}">${status[0]}</span>
+    </div>
+    <div class="grid grid-cols-3 gap-1.5 text-[10px] text-slate-300">
+      <div>Au norm: <b>${fmt(res.sub.sAu, 2)}</b></div>
+      <div>As norm: <b>${fmt(res.sub.sAs, 2)}</b></div>
+      <div>Sb norm: <b>${fmt(res.sub.sSb, 2)}</b></div>
+      <div>Hg norm: <b>${fmt(res.sub.sHg, 2)}</b></div>
+      <div>Tl norm: <b>${fmt(res.sub.sTl, 2)}</b></div>
+      <div>Cu norm: <b>${fmt(res.sub.sCu, 2)}</b></div>
+    </div>
+  `;
+  renderKPI();
+}
+
+/* 9. TAB 4: SGVI MODELING & PROSPECT RANKING */
+function renderSgviWeights() {
+  const labels = {
+    S: 'S · Skor Mineral Alterasi Spektral',
+    G: 'G · Skor Anomali Geokimia Pathfinder',
+    T: 'T · Skor Struktur / Rekahan',
+    L: 'L · Skor Kesesuaian Litologi'
+  };
+  $('sgviWeightSliders').innerHTML = Object.keys(STATE.sgviWeights).map(k => `
+    <div>
+      <div class="flex justify-between font-mono text-[11px]">
+        <span>${labels[k]}</span>
+        <b id="wv_${k}" class="text-amber-300">${STATE.sgviWeights[k].toFixed(2)}</b>
+      </div>
+      <input type="range" class="range" min="0" max="1" step="0.05" value="${STATE.sgviWeights[k]}" oninput="STATE.sgviWeights['${k}']=+this.value;$('wv_${k}').textContent=Number(this.value).toFixed(2);renderSgviSection();renderKPI()">
+    </div>
+  `).join('');
+}
+
+function resetSgviWeights() {
+  STATE.sgviWeights = { S: 0.30, G: 0.35, T: 0.25, L: 0.10 };
+  renderSgviWeights();
+  renderSgviSection();
+  renderKPI();
+  toast('Bobot SGVI dikembalikan ke default (0,30S + 0,35G + 0,25T + 0,10L)');
+}
+
+function addProspectBlock() {
+  const idx = STATE.blocks.length + 1;
+  STATE.blocks.push({
+    id: 'BLK-0' + idx,
+    name: 'Prospek Tambahan #' + idx,
+    lith: 'Andesit Terubah',
+    min: 'Alunite + Kaolinite',
+    S: 0.72, G: 0.70, T: 0.68, L: 0.75
+  });
+  renderSgviSection();
+  toast('Blok prospek baru ditambahkan');
+}
+
+function renderSgviSection() {
+  const w = STATE.sgviWeights;
+  const wSum = (w.S + w.G + w.T + w.L) || 1;
+  const scored = STATE.blocks.map((b, idx) => {
+    const sgvi = (w.S * b.S + w.G * b.G + w.T * b.T + w.L * b.L) / wSum;
+    return { ...b, idx, sgvi, cls: classifySGVI(sgvi) };
+  }).sort((a, b) => b.sgvi - a.sgvi);
+
+  $('sgviTable').innerHTML = `
+    <thead>
+      <tr>
+        <th>Rank</th>
+        <th>Blok Prospek</th>
+        <th>Asosiasi Mineral</th>
+        <th>S</th>
+        <th>G</th>
+        <th>T</th>
+        <th>L</th>
+        <th>Skor SGVI</th>
+        <th>Prioritas</th>
+      </tr>
+    </thead>
+    <tbody>
+      ${scored.map((b, r) => `
+        <tr>
+          <td class="font-black text-amber-300">#${r + 1}</td>
+          <td style="min-width:170px"><b>${b.id}</b> · ${b.name}<div class="sub">${b.lith}</div></td>
+          <td class="text-cyan-300" style="min-width:140px">${b.min}</td>
+          <td><input type="number" min="0" max="1" step="0.05" value="${b.S}" class="inp" style="width:62px" onchange="STATE.blocks[${b.idx}].S=+this.value;renderSgviSection()"></td>
+          <td><input type="number" min="0" max="1" step="0.05" value="${b.G}" class="inp" style="width:62px" onchange="STATE.blocks[${b.idx}].G=+this.value;renderSgviSection()"></td>
+          <td><input type="number" min="0" max="1" step="0.05" value="${b.T}" class="inp" style="width:62px" onchange="STATE.blocks[${b.idx}].T=+this.value;renderSgviSection()"></td>
+          <td><input type="number" min="0" max="1" step="0.05" value="${b.L}" class="inp" style="width:62px" onchange="STATE.blocks[${b.idx}].L=+this.value;renderSgviSection()"></td>
+          <td class="font-black text-amber-300 text-sm">${fmt(b.sgvi, 3)}</td>
+          <td><span class="pill ${b.cls.cls}">${b.cls.label}</span></td>
+        </tr>
+      `).join('')}
+    </tbody>
+  `;
+
+  // Bar Chart
+  const cv = $('chSgviBar');
+  if (!cv) return;
+  const dpr = Math.min(2, window.devicePixelRatio || 1);
+  const host = cv.parentElement;
+  const cw = Math.max(300, host ? host.clientWidth - 32 : 600);
+  const ch = 240;
+  cv.style.width = '100%'; cv.style.height = ch + 'px';
+  cv.width = cw * dpr; cv.height = ch * dpr;
+  const ctx = cv.getContext('2d');
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+  const isDark = document.documentElement.classList.contains('dark');
+  const txCol = isDark ? '#cbd5e1' : '#1e293b';
+  const m = { l: 42, r: 14, t: 18, b: 36 };
+  const bw = (cw - m.l - m.r) / scored.length;
+
+  // Threshold dashed lines
+  [[0.75, '#ef4444', 'P1 (0,75)'], [0.60, '#f97316', 'P2 (0,60)'], [0.45, '#eab308', 'P3 (0,45)']].forEach(([yv, col, lbl]) => {
+    const yy = m.t + (1 - yv) * (ch - m.t - m.b);
+    ctx.strokeStyle = col + '88'; ctx.setLineDash([4, 4]);
+    ctx.beginPath(); ctx.moveTo(m.l, yy); ctx.lineTo(cw - m.r, yy); ctx.stroke(); ctx.setLineDash([]);
+    ctx.fillStyle = col; ctx.font = '9px JetBrains Mono'; ctx.textAlign = 'right';
+    ctx.fillText(lbl, cw - m.r - 2, yy - 3);
+  });
+
+  scored.forEach((b, i) => {
+    const bh = b.sgvi * (ch - m.t - m.b);
+    const x = m.l + i * bw + bw * 0.18;
+    const y = ch - m.b - bh;
+    ctx.fillStyle = b.cls.color;
+    ctx.beginPath(); ctx.roundRect(x, y, bw * 0.64, bh, [6, 6, 0, 0]); ctx.fill();
+    ctx.fillStyle = txCol; ctx.font = 'bold 10px JetBrains Mono'; ctx.textAlign = 'center';
+    ctx.fillText(fmt(b.sgvi, 2), x + bw * 0.32, y - 5);
+    ctx.fillText(b.id, x + bw * 0.32, ch - m.b + 14);
+  });
+}
+
+/* 10. TAB 5: TECHNICAL REPORT & EXPORTS */
+function renderFullReport() {
+  const spec = getMixedSpectrum();
+  const geo = calcGeochemScore();
+  $('fullReportPreview').innerHTML = `
+    <div class="rounded-xl bg-slate-950/45 border border-sky-900/60 p-4 space-y-2">
+      <h4 class="font-tech text-sm font-black text-cyan-300">1. PENJELASAN TOPIK</h4>
+      <p class="text-slate-200">Endapan emas tipe <b>High-Sulfidation (HS) Epithermal</b> terbentuk pada lingkungan vulkanik–hidrotermal bersuhu tinggi yang dicirikan oleh alterasi asam kuat, tingkat sulfidasi tinggi, serta kehadiran mineral diagnostik seperti <b>alunite, kaolinite/dickite, pyrophyllite, diaspore, silisifikasi (vuggy quartz)</b>, dan mineral sulfosalt/sulfida <b>enargite, luzonite, covellite</b>. Aplikasi ini mengintegrasikan data penginderaan jauh hiperspektral/multispektral (<b>EMIT, ASTER, Sentinel-2</b>) melalui metode <b>SAM</b> dan <b>NLSMA</b> dengan vektor geokimia <i>pathfinder</i> (<b>Au, As, Sb, Hg, Tl, Cu</b>) serta kontrol geologi ke dalam indeks prospektivitas terpadu <b>SGVI</b>.</p>
+    </div>
+
+    <div class="rounded-xl bg-slate-950/45 border border-sky-900/60 p-4 space-y-2">
+      <h4 class="font-tech text-sm font-black text-amber-300">2. WORKFLOW INTEGRASI EKSPLORASI</h4>
+      <ol class="list-decimal ml-5 space-y-1 text-slate-200">
+        <li><b>Identifikasi Sistem Epithermal HS:</b> Pemodelan tatanan vulkanik–hidrotermal asam tinggi dan zonasi alterasi konsentris.</li>
+        <li><b>Akuisisi 3 Pilar Data:</b> (a) <i>Spektral</i> (EMIT/ASTER/Sentinel-2), (b) <i>Geokimia</i> (unsur pathfinder Au, As, Sb, Hg, Tl, Cu, S), dan (c) <i>Geologi</i> (vulkanisme, struktur/rekahan, litologi, alterasi).</li>
+        <li><b>Pemrosesan Spektral Kuantitatif:</b> Klasifikasi sudut spektral <b>SAM</b> dan pemodelan kelimpahan campuran nonlinier <b>NLSMA</b>.</li>
+        <li><b>Integrasi Multi-Parameter (SGVI):</b> Korelasi spasial dan statistik berbobot <code>SGVI = 0,30S + 0,35G + 0,25T + 0,10L</code>.</li>
+        <li><b>Deliniasi Target Emas HS:</b> Klasifikasi zona prospektivitas <b>P1 (Sangat Tinggi)</b> hingga <b>P4 (Rendah)</b> untuk penentuan titik survei geofisika dan pemboran.</li>
+      </ol>
+    </div>
+
+    <div class="grid md:grid-cols-2 gap-4">
+      <div class="rounded-xl bg-slate-950/45 border border-sky-900/60 p-4 space-y-2">
+        <h4 class="font-tech text-sm font-black text-emerald-300">3. POIN-POIN PENTING</h4>
+        <ul class="list-disc ml-5 space-y-1 text-slate-200">
+          <li>Fitur serapan ikatan <b>Al–OH</b> kuat pada panjang gelombang <b>~1,40 µm, ~1,90 µm, dan ~2,17–2,21 µm</b> menjadi penciri utama mineral alterasi HS.</li>
+          <li>Zonasi vertikal–lateral bergerak dari pusat <b>Silisifikasi (Quartz ±Au)</b> dan <b>Advanced Argillic (As–Sb–Hg–Au)</b> ke zona <b>Argilik (Al–Si–S)</b> dan <b>Propilitik (Cu–Fe–Mg)</b>.</li>
+          <li>Skor simulasi aktif: <b>SAM θ = ${fmt(spec.bestMatch.deg, 1)}° (${spec.bestMatch.name})</b>, <b>NLSMA = ${fmt(spec.A_alt*100, 1)}%</b>, <b>Pathfinder G = ${fmt(geo.G_score, 3)}</b>.</li>
+        </ul>
+      </div>
+
+      <div class="rounded-xl bg-slate-950/45 border border-sky-900/60 p-4 space-y-2">
+        <h4 class="font-tech text-sm font-black text-rose-300">4. SARAN TEKNIS &amp; KESIMPULAN</h4>
+        <ul class="list-disc ml-5 space-y-1 text-slate-200">
+          <li><b>Verifikasi Sulfida Opak:</b> <i>Enargite</i> dan <i>luzonite</i> tidak selalu jelas secara reflektansi SWIR, sehingga wajib diverifikasi dengan geokimia batuan dan petrografi.</li>
+          <li><b>Survei Lanjutan:</b> Fokuskan geofisika <b>IP/Resistivitas</b> dan pemboran eksplorasi pada zona <b>P1</b> yang berimpit dengan struktur sesar dan silisifikasi.</li>
+          <li><b>Kesimpulan:</b> Integrasi SAM, NLSMA, vektor geokimia, dan kontrol geologi melalui indeks <b>SGVI</b> efektif mendelineasi zona inti prospektif emas HS secara kuantitatif.</li>
+        </ul>
+      </div>
+    </div>
+  `;
+}
+
+function dlFile(name, content, type) {
+  const b = new Blob([content], { type: type || 'application/octet-stream' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(b);
+  a.download = name;
+  document.body.appendChild(a);
+  a.click();
+  setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 500);
+}
+
+function exportWord() {
+  const spec = getMixedSpectrum();
+  const geo = calcGeochemScore();
+  const tgl = new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
+  const html = `
+  <html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40">
+  <head><meta charset="utf-8"><title>Laporan Teknis HS-GOLD SPECTRAGEO PRO</title>
+  <style>@page{size:A4;margin:2cm}body{font-family:'Times New Roman',serif;font-size:11.5pt;line-height:1.45}h1{color:#0b3a63;font-size:18pt}h2{color:#0b3a63;border-bottom:2px solid #f59e0b;padding-bottom:3px;margin-top:16px}table{border-collapse:collapse;width:100%;margin:8px 0;font-size:10pt}th{background:#0b3a63;color:#fff;padding:6px;text-align:left}td{border:1px solid #cbd5e1;padding:5px}</style>
+  </head><body>
+  <div style="border-left:8px solid #f59e0b;padding-left:14px;margin-bottom:18px">
+    <p style="margin:0;color:#475569;font-size:10pt">PT. AGRINAS PALMA NUSANTARA · GEOSAINS &amp; EKSPLORASI MINERAL</p>
+    <h1>KORELASI SPEKTRAL DAN VEKTOR GEOKIMIA PADA ENDAPAN EMAS HIGH-SULFIDATION (HS)</h1>
+    <p style="margin:0"><b>Disusun oleh:</b> Ir. Mohamad Hartadi, S.T. · Tanggal: ${tgl} · Skenario: ${PRESETS[STATE.preset].label}</p>
+  </div>
+  <h2>1. Ringkasan Parameter Kuantitatif (SAM – NLSMA – SGVI)</h2>
+  <table>
+    <tr><th>Parameter</th><th>Nilai Hasil Simulasi</th><th>Keterangan</th></tr>
+    <tr><td>Sudut Spektral SAM (θ)</td><td>${fmt(spec.bestMatch.rad, 3)} rad (${fmt(spec.bestMatch.deg, 1)}°)</td><td>Kecocokan terbaik: ${spec.bestMatch.name}</td></tr>
+    <tr><td>Kelimpahan NLSMA (A_alteration)</td><td>${fmt(spec.A_alt * 100, 1)}%</td><td>Alunite ${Math.round(spec.fractions.fA*100)}%, Pyrophyllite ${Math.round(spec.fractions.fP*100)}%</td></tr>
+    <tr><td>Skor Pathfinder Geokimia (G)</td><td>${fmt(geo.G_score, 3)}</td><td>Au=${STATE.geochem.Au} ppm, As=${STATE.geochem.As} ppm, Cu=${STATE.geochem.Cu} ppm</td></tr>
+    <tr><td>Persamaan Indeks SGVI</td><td>SGVI = 0,30S + 0,35G + 0,25T + 0,10L</td><td>Klasifikasi Target: P1 (Sangat Tinggi) – P4 (Rendah)</td></tr>
+  </table>
+  <h2>2. Korelasi Mineral Spektral dengan Vektor Geokimia</h2>
+  <table>
+    <tr><th>Mineral</th><th>Vektor Geokimia</th><th>Interpretasi pada Sistem HS</th></tr>
+    ${MINERALS.map(m => `<tr><td><b>${m.name}</b></td><td>${m.vec}</td><td>${m.interp}</td></tr>`).join('')}
+  </table>
+  <h2>3. Saran Teknis &amp; Kesimpulan</h2>
+  <p>Fokuskan eksplorasi detail pada zona <i>advanced argillic</i> dan silisifikasi dengan asosiasi <b>As–Sb–Hg–Au</b> (kelas <b>P1</b>). Lakukan verifikasi geokimia dan petrografi untuk mendeteksi <i>enargite</i> dan <i>luzonite</i> yang tidak selalu terbaca jelas pada spektrum reflektansi optik/SWIR.</p>
+  <p style="margin-top:20px;font-size:9.5pt;color:#475569">Pengembang: Ir. Mohamad Hartadi, S.T. | PT. Agrinas Palma Nusantara | Blog: https://newbieonline7.blogspot.com/ | FB: https://www.facebook.com/hartadi.kds | WA: 0822-3103-6047</p>
+  </body></html>`;
+  dlFile('HS_GOLD_SPECTRAGEO_LAPORAN_' + new Date().toISOString().slice(0,10) + '.doc', '\ufeff' + html, 'application/msword');
+  toast('Laporan Teknis Word (.doc) berhasil diunduh');
+}
+
+function exportJSON() {
+  const payload = {
+    app: 'HS-GOLD SPECTRAGEO PRO v1.0',
+    developer: 'Ir. Mohamad Hartadi, S.T.',
+    consultant: 'PT. Agrinas Palma Nusantara',
+    preset: STATE.preset,
+    spectralSimulation: getMixedSpectrum(),
+    geochemPathfinder: calcGeochemScore(),
+    sgviWeights: STATE.sgviWeights,
+    prospectBlocks: STATE.blocks,
+    minerals: MINERALS
+  };
+  dlFile('HS_GOLD_SPECTRAGEO_DATA.json', JSON.stringify(payload, null, 2), 'application/json');
+  toast('Data JSON berhasil diekspor');
+}
+
+function exportCSV() {
+  const h = ['ID_Blok', 'Nama_Prospek', 'Litologi', 'Mineral_Dominan', 'Skor_S', 'Skor_G', 'Skor_T', 'Skor_L', 'SGVI', 'Prioritas'];
+  const w = STATE.sgviWeights;
+  const wSum = (w.S + w.G + w.T + w.L) || 1;
+  const rows = STATE.blocks.map(b => {
+    const sgvi = (w.S * b.S + w.G * b.G + w.T * b.T + w.L * b.L) / wSum;
+    return [b.id, b.name, b.lith, b.min, b.S, b.G, b.T, b.L, sgvi.toFixed(3), classifySGVI(sgvi).label];
+  });
+  dlFile('HS_GOLD_PROSPEK_SGVI.csv', '\ufeff' + [h, ...rows].map(r => r.map(c => '"' + String(c).replace(/"/g, '""') + '"').join(',')).join('\n'), 'text/csv');
+  toast('Tabel Prospek CSV berhasil diekspor');
+}
+
+/* 11. MY APLIKASI (79 PROJECTS PORTFOLIO) */
+const MYAPPS = [
+  ["https://adikds-byte.github.io/HS-GOLD-SPECTRAGEO-PRO/","HS-Gold SpectraGeo Pro","Geosains & Eksplorasi"],
+  ["https://adikds-byte.github.io/ABRASI-SHIELD-PRO/","Abrasi Shield Pro","Pesisir & Coastal"],
+  ["https://adikds-byte.github.io/MATRIX-ORBIT-3D/","Matrix Orbit 3D","AI & Agent"],
+  ["https://adikds.github.io/jarvis-ai/","JARVIS AI","AI & Agent"],
+  ["https://adikds.github.io/-Doa-Digital-Pro/","Doa Digital Pro","Religi & Islami"],
+  ["https://adikds.github.io/Al-Quran-Karim/","Al-Quran Karim","Religi & Islami"],
+  ["https://adikds-byte.github.io/MASJID-AL-HUDA/","Masjid Al-Huda","Religi & Islami"],
+  ["https://adikds.github.io/ai-meeting-assistant/","AI Meeting Pro","AI & Produktivitas"],
+  ["https://adikds.github.io/NEXUS-PAGE-AGENT-VER.1.0/","Nexus Page Agent","AI & Agent"],
+  ["https://adikds.github.io/APEX-Foundations-v3.1-Geotechnical-AI-/","Apex Foundations","Geoteknik & Sipil"],
+  ["https://adikds.github.io/ANALISIS-PONDASI-TELAPAK-/","Analisis Pondasi","Geoteknik & Sipil"],
+  ["https://adikds.github.io/AASHTO-SOIL-CLASSIFIER/","AASHTO Soil","Geoteknik & Sipil"],
+  ["https://adikds.github.io/ATLAS-GEOTEKNIK/","Atlas Geoteknik","Geoteknik & Sipil"],
+  ["https://adikds.github.io/GeoStructPro-15-Essential-Geotechnical-Formulas/","GeoStructPro 15","Geoteknik & Sipil"],
+  ["https://adikds.github.io/GEOSTRUCT-PRO-20-FORMULA-GEOTECHNICAL/","GeoStruct Pro 20","Geoteknik & Sipil"],
+  ["https://adikds.github.io/UNIFIED-SOIL-CLASSIFICATION-SYSTEM/","USCS Soil","Geoteknik & Sipil"],
+  ["https://adikds.github.io/WAY-APU-DAM/","Way Apu Dam","Bendungan & Hidrologi"],
+  ["https://adikds.github.io/INTEGRATED-DAM-ANALYTICS-ASSESSMENT-SYSTEM/","Dam Analytics","Bendungan & Hidrologi"],
+  ["https://adikds.github.io/SISTEM-MONITORING-SEISMIK-PERINGATAN-TSUNAMI/","Monitoring Seismik","Seismik & Mitigasi"],
+  ["https://adikds.github.io/MONITORING-PREDIKSI-STATUS-EI-NI-O-LA-NI-A/","El Nino La Nina","Klimatologi & Cuaca"],
+  ["https://adikds.github.io/MONITORING-PREDIKSI-ANGIN-MUSON-INDONESIA/","Monitoring Cuaca","Klimatologi & Cuaca"],
+  ["https://adikds.github.io/AERORADAR-PRO/","AeroRadar Pro","Radar & Navigasi"],
+  ["https://adikds.github.io/HYDRACANAL-PRO-GEOMETRIC-DESIGN/","HydraCanal Pro","Geoteknik & Sipil"],
+  ["https://adikds.github.io/EVENT-DRIVEN-ARCHITECTURE-FOR-AI-AGENTS/","EDA AI Agents","AI & Agent"],
+  ["https://adikds.github.io/edu-market-pro/","EduMarket Pro","Edukasi & Pasar"],
+  ["https://adikds.github.io/iptv-terminal/","IPTV Terminal","Media & Streaming"],
+  ["https://adikds.github.io/TV-streaming-live/","TV Streaming Live","Media & Streaming"],
+  ["https://adikds-byte.github.io/TB-SINAR-MURIA/","Aplikasi Kasir TB. Sinar Muria","Bisnis & Kasir"],
+  ["https://adikds-byte.github.io/SEBLAK-ASMARA/","Aplikasi Kasir Seblak","Bisnis & Kasir"],
+  ["https://adikds-byte.github.io/Aplikasi-Point-of-Sale-POS-sistem-kasir/","Aplikasi Sistem Kasir","Bisnis & Kasir"],
+  ["https://adikds.github.io/pos-system/","POS Terminal Pro","Bisnis & Kasir"],
+  ["https://adikds.github.io/Aplikasi_Point_of_Sale_-POS-_atau_sistem_kasir/","POS Kasir","Bisnis & Kasir"],
+  ["https://adikds.github.io/business-suite/","Business Suite","Bisnis & Manajemen"],
+  ["https://adikds.github.io/stock-manager/","Stock Manager","Bisnis & Manajemen"],
+  ["https://adikds.github.io/financial-planner/","Financial Planner","Keuangan & Finansial"],
+  ["https://adikds.github.io/KEUANGANKU/","Keuanganku","Keuangan & Finansial"],
+  ["https://adikds.github.io/DOKTER-AI/","DOKTER AI EXPERT","Medis & Kesehatan"],
+  ["https://adikds-byte.github.io/HabitFlow_Pro/","HabitFlow","Medis & Kesehatan"],
+  ["https://adikds-byte.github.io/APOTEK-DARUSSYIFA/","APOTIK DARUSSYIFA","Medis & Kesehatan"],
+  ["https://adikds.github.io/DARUSSYIFA-MEDIKA/","DARUSSYIFA V.5.0","Medis & Kesehatan"],
+  ["https://adikds.github.io/DARUSSYIFA_MEDIKA/","DARUSSYIFA V.2.0","Medis & Kesehatan"],
+  ["https://adikds.github.io/SMILE-SYIFA-AI/","SMILE SYIFA AI","Medis & Kesehatan"],
+  ["https://adikds.github.io/SKIN_SYIFA_AI/","SKIN SYIFA AI","Medis & Kesehatan"],
+  ["https://adikds.github.io/NEURO-PSYCH_AI/","NEURO-PSYCH AI","Medis & Kesehatan"],
+  ["https://adikds.github.io/-MEGA-ATLAS-FKG/","Mega Atlas FKG","Medis & Kesehatan"],
+  ["https://adikds.github.io/Mega-Atlas-Kedokteran-Neurologi-Bedah-Syaraf/","Neurology Atlas","Medis & Kesehatan"],
+  ["https://adikds-byte.github.io/NutriTrackID-Kuliner-Makro-Kalkulator/","NutriTrackID","Medis & Kesehatan"],
+  ["https://adikds.github.io/STATISTICS_for_ENGINEERS-/","Statistics Engineers","Teknik & Sains"],
+  ["https://adikds.github.io/AI-VIDEO-EDITOR/","AI Video Editor","Multimedia & AI"],
+  ["https://adikds.github.io/SIMULASI-DAN-JADWAL-SERTA-SCOR-WORLD-CUP-2026/","World Cup 2026","Olahraga & Hiburan"],
+  ["https://adikds.github.io/FREE-CLAUDE-CODE/","Free Claude Code","AI & Developer"],
+  ["https://adikds.github.io/konstruksi-ai/","KONAI Pro","Geoteknik & Sipil"],
+  ["https://adikds.github.io/pabrik-ai/","Pabrik AI Pro","AI & Industri"],
+  ["https://adikds.github.io/gudang-bulog/","Gudang Bulog FEM","Geoteknik & Sipil"],
+  ["https://adikds.github.io/Adi_Newbie/","ADI NEWBIE","Personal & Portofolio"],
+  ["https://famelack.com/radio/id","Famelack Radio ID","Media & Streaming"],
+  ["https://famelack.com/tv/id","Famelack TV ID","Media & Streaming"],
+  ["https://www.f15library.com/","F15 Library","Edukasi & Perpustakaan"],
+  ["https://adikds-byte.github.io/InaTEWS-Pro-v45/","InaTEWS Pro Tsunami","Seismik & Mitigasi"],
+  ["https://adikds-byte.github.io/Seismic_Site_Report_Pro/","Seismic Site Report Pro","Seismik & Mitigasi"],
+  ["https://adikds-byte.github.io/DSS-Sedimen-Pro-v4.81-Pro/","DSS Sedimen Pro","Pesisir & Sedimen"],
+  ["https://adikds-byte.github.io/COASTAL-SWI-ENGINE-PRO/","Coastal SWI Engine","Pesisir & Coastal"],
+  ["https://adikds-byte.github.io/Indonesia_Dams_DSS/","Indonesia Dams DSS","Bendungan & Energi"],
+  ["https://adikds-byte.github.io/GeoStruct_Pro_Master_Edition/","GeoStruct Pro Master","Geoteknik & Sipil"],
+  ["https://adikds-byte.github.io/SoilLabKit-Pro-Master-Edition-V7.0/","SoilLabKit Pro","Geoteknik & Sipil"],
+  ["https://adikds-byte.github.io/GeoTestKit-PRO-V1.0/","GeoTestKit Pro","Geoteknik & Sipil"],
+  ["https://adikds-byte.github.io/AL-FALAK-RAMADAN-SIKLUS-33-TAHUN/","Al Falak Ramadan","Religi & Islami"],
+  ["https://adikds-byte.github.io/BENDUNGAN-TAILING-COMMAND-CENTRE/","Tailing Dam Command Centre","Geoteknik & Sipil"],
+  ["https://adikds-byte.github.io/DCPKit-Pro/","DCPKit Pro","Geoteknik & Sipil"],
+  ["https://adikds-byte.github.io/Simulasi-dan-Analisis-SaboDam/","SaboDam Analisis","Geoteknik & Sipil"],
+  ["https://adikds-byte.github.io/SISTEM-SIMULASI-ANALISIS-STABILITAS-BENDUNGAN-BETON-GRAVITASI-TRAPESIUM-v5.6-PRO/","Gravity Dam Analisis","Geoteknik & Sipil"],
+  ["https://adikds-byte.github.io/GEOSTRUCT-BUILDING-PRO-v7.0-Analisis-Struktur-/","Analisis Struktur","Geoteknik & Sipil"],
+  ["https://adikds-byte.github.io/HYDROPOWER-PRO-DSS-DESIGN-STUDIO-v9.0/","Hydropower DSS Studio","HydroPower & Sipil"],
+  ["https://adikds-byte.github.io/DSS-Bendungan-Poso-1-PLTA-Poso-515-MW-Poso-Energy/","Hydropower DSS Poso","HydroPower & Sipil"],
+  ["https://adikds-byte.github.io/MinePond-Studio-PRO/","MinePond Studio Pro","Hidrologi & Sedimentasi"],
+  ["https://adikds-byte.github.io/kalkulator_budget_rumah_pro_v2.7/","Kalkulator Budget Rumah","Kalkulator & Rumah"],
+  ["https://adikds-byte.github.io/X-civil-Structure-Pro/","Xcivil Structure Pro","Struktur & Sipil"],
+  ["https://adikds-byte.github.io/BuildRAB-AI-Estimasi-RAB-Kontrol-Budget-Analisis-Realisasi./","BuildRAB AI","Kalkulator & Rumah"],
+  ["https://newbieonline7.blogspot.com/","My Blog Engineering & AI","Blog & Artikel"]
+];
+
+let appCat = 'Semua';
+function appHost(u) { try { return new URL(u).hostname.replace('www.', ''); } catch (e) { return u; } }
+function renderApps() {
+  const q = ($('appQ').value || '').trim().toLowerCase();
+  const cats = ['Semua', ...[...new Set(MYAPPS.map(a => a[2]))]];
+  $('appChips').innerHTML = cats.map(c => {
+    const n = c === 'Semua' ? MYAPPS.length : MYAPPS.filter(a => a[2] === c).length;
+    return `<button class="btn ${c===appCat?'btn-acc':'btn-gh'}" style="padding:4px 9px;font-size:10px" onclick="appCat='${c.replace(/'/g,"\\'")}';renderApps()">${c} <span style="opacity:.65">${n}</span></button>`;
+  }).join('');
+  const list = MYAPPS.map((a, i) => ({ u: a[0], n: a[1], c: a[2], i: i + 1 }))
+    .filter(a => (appCat === 'Semua' || a.c === appCat) && (!q || (a.n + ' ' + a.c + ' ' + a.u).toLowerCase().includes(q)));
+  if ($('appCount')) $('appCount').innerHTML = `Menampilkan <b class="text-amber-300">${list.length}</b> dari <b>${MYAPPS.length}</b> aplikasi`;
+  $('appList').innerHTML = list.map(a => `
+    <a href="${a.u}" target="_blank" rel="noopener" class="rounded-xl border border-sky-900/60 bg-slate-950/45 p-2.5 flex items-center gap-2.5 hover:border-amber-400 hover:bg-slate-900/75 transition group">
+      <div class="w-8 h-8 shrink-0 rounded-lg bg-gradient-to-br from-amber-400 to-cyan-400 flex items-center justify-center text-slate-950 font-black text-[10px] font-tech">${String(a.i).padStart(2,'0')}</div>
+      <div class="min-w-0 flex-1">
+        <div class="font-bold text-[11.5px] leading-tight truncate text-slate-100 group-hover:text-amber-200">${a.n}</div>
+        <div class="sub truncate">${a.c} · ${appHost(a.u)}</div>
+      </div>
+      <i class="fa-solid fa-arrow-up-right-from-square text-[10px] text-sky-400/70 group-hover:text-amber-300 shrink-0"></i>
+    </a>
+  `).join('') || '<div class="sub col-span-full py-4 text-center">Tidak ada aplikasi yang cocok.</div>';
+  if ($('appTotal')) $('appTotal').textContent = MYAPPS.length;
+}
+
+/* 12. TABS, MODALS, THEME & REAL-TIME MASEHI + HIJRIYAH CLOCK */
+const TABS = [
+  ['dash', 'fa-volcano', '1 · DASBOR & ZONASI HS'],
+  ['spec', 'fa-wave-square', '2 · SPEKTROSKOPI SWIR & SAM'],
+  ['geochem', 'fa-flask-vial', '3 · KORELASI MINERAL & GEOKIMIA'],
+  ['sgvi', 'fa-ranking-star', '4 · PEMODELAN SGVI & TARGET'],
+  ['report', 'fa-file-word', '5 · RISALAH TEKNIS & EKSPOR']
+];
+
+function buildTabs() {
+  $('tabNav').innerHTML = TABS.map(t => `<button class="tabbtn ${t[0]==='dash'?'on':''}" data-tab="${t[0]}" onclick="showTab('${t[0]}')"><i class="fa-solid ${t[1]} mr-1.5"></i>${t[2]}</button>`).join('');
+}
+
+function showTab(k) {
+  document.querySelectorAll('.ws-section').forEach(e => e.classList.remove('on'));
+  $('s-' + k).classList.add('on');
+  document.querySelectorAll('.tabbtn').forEach(b => b.classList.toggle('on', b.dataset.tab === k));
+  const act = document.querySelector('.tabbtn.on');
+  if (act) act.scrollIntoView({ inline: 'center', block: 'nearest', behavior: 'smooth' });
+  setTimeout(() => renderTab(k), 40);
+}
+
+function renderTab(k) {
+  if (k === 'dash') { drawZonationSVG(); drawSgviMap(); renderInsights(); }
+  if (k === 'spec') { updateSpecSim(); }
+  if (k === 'geochem') { renderMineralTable(); renderMatrixTable(); updateGeochemSim(); }
+  if (k === 'sgvi') { renderSgviWeights(); renderSgviSection(); }
+  if (k === 'report') { renderFullReport(); }
+}
+
+function activeTab() {
+  const b = document.querySelector('.tabbtn.on');
+  return b ? b.dataset.tab : 'dash';
+}
+
+function renderAll() {
+  renderKPI();
+  renderTab(activeTab());
+}
+
+function openModal(id) { $(id).classList.add('on'); if (id === 'mApps') renderApps(); }
+function closeModal(id) { $(id).classList.remove('on'); }
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') {
+    document.querySelectorAll('.modal-bg.on').forEach(m => m.classList.remove('on'));
+    if ($('ssWrap').style.display === 'flex') toggleSS(false);
+  }
+});
+document.addEventListener('click', e => {
+  if (e.target.classList && e.target.classList.contains('modal-bg')) e.target.classList.remove('on');
+});
+
+function toggleTheme() {
+  const h = document.documentElement;
+  h.classList.toggle('dark');
+  $('themeIcon').className = 'fa-solid ' + (h.classList.contains('dark') ? 'fa-moon' : 'fa-sun');
+  try { localStorage.setItem('hs_theme', h.classList.contains('dark') ? 'd' : 'l'); } catch (e) {}
+  setTimeout(() => renderTab(activeTab()), 50);
+}
+
+function toast(msg) {
+  let t = $('toast');
+  if (!t) {
+    t = document.createElement('div');
+    t.id = 'toast';
+    t.style.cssText = 'position:fixed;left:50%;bottom:78px;transform:translateX(-50%);z-index:100100;background:rgba(5,18,36,.97);color:#e0f2fe;border:1px solid #22d3ee;border-radius:12px;padding:9px 16px;font:700 11.5px JetBrains Mono,monospace;box-shadow:0 10px 30px rgba(0,0,0,.65);transition:opacity .3s;max-width:90vw;text-align:center';
+    document.body.appendChild(t);
+  }
+  t.textContent = msg;
+  t.style.opacity = 1;
+  clearTimeout(t._h);
+  t._h = setTimeout(() => t.style.opacity = 0, 2800);
+}
+
+/* Hijriyah Date Helper (Intl + Fallback) */
+function getHijriDateString(date) {
+  try {
+    const str = new Intl.DateTimeFormat('id-ID-u-ca-islamic-umalqura', {
+      day: 'numeric',
+      month: 'long',
+      year: 'numeric'
+    }).format(date);
+    if (str && !str.includes('Masehi')) return str.endsWith('H') ? str : str + ' H';
+  } catch (e) {}
+  // Fallback Kuwaiti algorithm
+  const jd = Math.floor((date.getTime() / 86400000) + 2440587.5);
+  let l = jd - 1948440 + 10632;
+  const n = Math.floor((l - 1) / 10631);
+  l = l - 10631 * n + 354;
+  const j = (Math.floor((10985 - l) / 5316)) * (Math.floor((50 * l) / 17719)) + (Math.floor(l / 5670)) * (Math.floor((43 * l) / 15238));
+  l = l - (Math.floor((30 - j) / 15)) * (Math.floor((17719 * j) / 50)) - (Math.floor(j / 16)) * (Math.floor((15238 * j) / 43)) + 29;
+  const m = Math.floor((24 * l) / 709);
+  const d = l - Math.floor((709 * m) / 24);
+  const y = 30 * n + j - 30;
+  const months = ['Muharram','Safar','Rabiul Awal','Rabiul Akhir','Jumadil Awal','Jumadil Akhir','Rajab','Syaban','Ramadan','Syawal','Zulkaidah','Zulhijah'];
+  return `${d} ${months[m - 1]} ${y} H`;
+}
+
+function updateClock() {
+  const now = new Date();
+  const wib = new Intl.DateTimeFormat('id-ID', {
+    timeZone: 'Asia/Jakarta', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false
+  }).format(now).replace(/\./g, ':');
+  const masehi = new Intl.DateTimeFormat('id-ID', {
+    timeZone: 'Asia/Jakarta', weekday: 'long', day: 'numeric', month: 'long', year: 'numeric'
+  }).format(now);
+  const hijri = getHijriDateString(now);
+
+  if ($('topTime')) $('topTime').textContent = wib + ' WIB';
+  if ($('topDate')) $('topDate').textContent = masehi;
+  if ($('topHijri')) $('topHijri').textContent = hijri;
+
+  if ($('bootTime')) $('bootTime').textContent = wib + ' WIB';
+  if ($('bootDateMasehi')) $('bootDateMasehi').textContent = masehi;
+  if ($('bootDateHijri')) $('bootDateHijri').textContent = hijri;
+
+  if ($('ssClock')) $('ssClock').textContent = wib;
+  if ($('ssDate')) $('ssDate').textContent = masehi;
+  if ($('ssHijri')) $('ssHijri').textContent = hijri;
+}
+setInterval(updateClock, 1000);
+
+/* 13. WISDOM, MOTIVATION & DOA-DOA (FOR BOOT & SCREENSAVER) */
+const WISDOMS = [
+  {
+    b: 'DOA ILMU BERMANFAAT & REZEKI HALAL',
+    ar: 'اللَّهُمَّ إِنِّي أَسْأَلُكَ عِلْمًا نَافِعًا، وَرِزْقًا طَيِّبًا، وَعَمَلًا مُتَقَبَّلًا',
+    la: '"Allahumma inni as\'aluka \'ilman nafi\'an, wa rizqan thayyiban, wa \'amalan mutaqabbalan."',
+    tx: '"Ya Allah, sesungguhnya aku memohon kepada-Mu ilmu yang bermanfaat, rezeki yang baik, dan amal yang diterima."',
+    src: 'HR. Ibnu Majah'
+  },
+  {
+    b: 'DOA KEMUDAHAN URUSAN & PENELITIAN',
+    ar: 'رَبِّ اشْرَحْ لِي صَدْرِي وَيَسِّرْ لِي أَمْرِي وَاحْلُلْ عُقْدَةً مِنْ لِسَانِي يَفْقَهُوا قَوْلِي',
+    la: '"Rabbisyrah lii shadrii, wa yassir lii amrii, wahlul \'uqdatan min lisaanii yafqahuu qaulii."',
+    tx: '"Ya Tuhanku, lapangkanlah dadaku, mudahkanlah urusanku, dan lepaskanlah kekakuan lidahku agar mereka mengerti perkataanku."',
+    src: 'QS. Thaha: 25–28'
+  },
+  {
+    b: 'AMANAH PENGELOLAAN SUMBER DAYA BUMI',
+    ar: 'وَلَا تُفْسِدُوا فِي الْأَرْضِ بَعْدَ إِصْلَاحِهَا',
+    la: '"Wa laa tufsiduu fil ardhi ba\'da ishlaahihaa."',
+    tx: '"Dan janganlah kamu membuat kerusakan di muka bumi sesudah (Allah) memperbaikinya."',
+    src: 'QS. Al-A\'raf: 56 · Etika Pertambangan & Konservasi'
+  },
+  {
+    b: 'DOA KEBAIKAN DUNIA & AKHIRAT',
+    ar: 'رَبَّنَا آتِنَا فِي الدُّنْيَا حَسَنَةً وَفِي الْآخِرَةِ حَسَنَةً وَقِنَا عَذَابَ النَّارِ',
+    la: '"Rabbanaa aatinaa fid-dunyaa hasanah wa fil aakhirati hasanah wa qinaa \'adzaaban-naar."',
+    tx: '"Ya Tuhan kami, berilah kami kebaikan di dunia dan kebaikan di akhirat, serta lindungilah kami dari azab neraka."',
+    src: 'QS. Al-Baqarah: 201'
+  },
+  {
+    b: 'KATA MOTIVASI GEOSAINS',
+    ar: '',
+    la: '',
+    tx: '"Di balik setiap pita serapan spektral SWIR dan anomali pathfinder geokimia tersimpan jejak sejarah hidrotermal bumi yang menunggu untuk dibaca dengan ketelitian ilmiah."',
+    src: 'Ir. Mohamad Hartadi, S.T. · PT. Agrinas Palma Nusantara'
+  },
+  {
+    b: 'KATA BIJAK EKSPLORASI MINERAL',
+    ar: '',
+    la: '',
+    tx: '"Sensor satelit hiperspektral melihat apa yang tak tampak oleh mata, geokimia mengonfirmasi apa yang tersimpan di kedalaman, dan integrasi data melahirkan keputusan eksplorasi yang presisi."',
+    src: 'Filosofi Eksplorasi Terpadu HS-Gold SpectraGeo'
+  }
+];
+
+let bootWisIdx = 0, bootWisTimer = null;
+function renderBootWis() {
+  const w = WISDOMS[bootWisIdx];
+  $('bootWisBadge').textContent = w.b;
+  $('bootWisAr').textContent = w.ar;
+  $('bootWisAr').style.display = w.ar ? 'block' : 'none';
+  $('bootWisLat').textContent = w.la;
+  $('bootWisLat').style.display = w.la ? 'block' : 'none';
+  $('bootWisTx').textContent = w.tx;
+  $('bootWisSrc').textContent = w.src;
+}
+function nextBootWis() {
+  bootWisIdx = (bootWisIdx + 1) % WISDOMS.length;
+  renderBootWis();
+}
+
+let ssIdx = 0, ssTimer = null;
+function toggleSS(on) {
+  const wrap = $('ssWrap');
+  if (on) {
+    wrap.style.display = 'flex';
+    if (!ssE) ssE = makeEarth($('ssEarthCanvas'), { camZ: 56, camY: 2, radius: 21, es: 0.0012, cs: 0.0008, sat: true });
+    showSSWis();
+    ssTimer = setInterval(() => { ssIdx = (ssIdx + 1) % WISDOMS.length; showSSWis(); }, 8000);
+  } else {
+    wrap.style.display = 'none';
+    clearInterval(ssTimer);
+  }
+}
+function showSSWis() {
+  const w = WISDOMS[ssIdx];
+  $('ssBadge').textContent = w.b;
+  $('ssAr').textContent = w.ar;
+  $('ssAr').style.display = w.ar ? 'block' : 'none';
+  $('ssLat').textContent = w.la;
+  $('ssLat').style.display = w.la ? 'block' : 'none';
+  $('ssTx').textContent = w.tx;
+  $('ssSrc').textContent = w.src;
+  const c = $('ssCard');
+  c.style.animation = 'none';
+  void c.offsetWidth;
+  c.style.animation = 'fadeUp .55s ease';
+}
+
+let idleT = null;
+function idleReset() {
+  clearTimeout(idleT);
+  idleT = setTimeout(() => {
+    if ($('loadingOverlay').style.display === 'none') toggleSS(true);
+  }, 240000);
+}
+['mousemove', 'keydown', 'click', 'touchstart'].forEach(ev => document.addEventListener(ev, idleReset, { passive: true }));
+
+/* 14. 3D REALISTIC EARTH + ORBITING HYPERSPECTRAL SATELLITE (THREE.JS) */
+const EARTH_TEX = {
+  day: [
+    'https://cdn.jsdelivr.net/gh/mrdoob/three.js@r128/examples/textures/planets/earth_atmos_2048.jpg',
+    'https://threejs.org/examples/textures/planets/earth_atmos_2048.jpg'
+  ],
+  clouds: [
+    'https://cdn.jsdelivr.net/gh/mrdoob/three.js@r128/examples/textures/planets/earth_clouds_1024.png'
+  ]
+};
+
+function loadChain(urls, ok, fail) {
+  if (!urls.length) { fail && fail(); return; }
+  const l = new THREE.TextureLoader();
+  l.setCrossOrigin('anonymous');
+  l.load(urls[0], ok, undefined, () => loadChain(urls.slice(1), ok, fail));
+}
+
+function procEarthTex() {
+  const w = 1024, h = 512, cv = document.createElement('canvas');
+  cv.width = w; cv.height = h;
+  const c = cv.getContext('2d');
+  const g = c.createLinearGradient(0, 0, 0, h);
+  g.addColorStop(0, '#071c3a');
+  g.addColorStop(0.5, '#0b3d7a');
+  g.addColorStop(1, '#071c3a');
+  c.fillStyle = g;
+  c.fillRect(0, 0, w, h);
+
+  const poly = (pts, col) => {
+    c.beginPath();
+    pts.forEach((p, i) => {
+      const x = (p[0] / 360 + 0.5) * w, y = (0.5 - p[1] / 180) * h;
+      i ? c.lineTo(x, y) : c.moveTo(x, y);
+    });
+    c.closePath();
+    c.fillStyle = col;
+    c.fill();
+  };
+  // Continents & Indonesian Archipelago
+  poly([[-10,36],[30,65],[90,72],[165,62],[135,35],[105,5],[75,10],[40,32]], '#1e5c3a');
+  poly([[-16,15],[-5,35],[35,30],[50,10],[35,-30],[15,-33],[8,4]], '#4d6b3c');
+  poly([[95,5.5],[104,-1],[106,-5.8],[98,1]], '#15803d'); // Sumatra
+  poly([[105.2,-6.1],[110.5,-6.6],[114.4,-7.8],[113.5,-8.5],[106,-7]], '#22c55e'); // Java
+  poly([[109,2],[118,4],[117,-3.5],[110,-2.8]], '#166534'); // Kalimantan
+  poly([[119,1],[125,1.5],[123,-5],[119,-5]], '#15803d'); // Sulawesi
+  poly([[131,-1],[141,-2],[141,-9],[132,-8]], '#166534'); // Papua
+  poly([[114,-22],[131,-12],[150,-22],[147,-38],[115,-34]], '#855832'); // Australia
+  poly([[-160,62],[-70,58],[-80,25],[-100,15],[-125,45]], '#275e3b'); // N America
+  poly([[-78,10],[-35,-6],[-58,-38],[-72,-45],[-78,-4]], '#1c6b36'); // S America
+  return new THREE.CanvasTexture(cv);
+}
+
+function procCloudTex() {
+  const cv = document.createElement('canvas');
+  cv.width = 1024; cv.height = 512;
+  const c = cv.getContext('2d');
+  for (let i = 0; i < 480; i++) {
+    const x = Math.random() * 1024, y = Math.random() * 512, r = 12 + Math.random() * 55;
+    const g = c.createRadialGradient(x, y, 1, x, y, r);
+    g.addColorStop(0, 'rgba(255,255,255,0.22)');
+    g.addColorStop(1, 'rgba(255,255,255,0)');
+    c.fillStyle = g;
+    c.beginPath(); c.arc(x, y, r, 0, 7); c.fill();
+  }
+  return new THREE.CanvasTexture(cv);
+}
+
+function makeEarth(box, o) {
+  if (!box || typeof THREE === 'undefined') return null;
+  box.innerHTML = '';
+  const W = Math.max(box.clientWidth, 240), H = Math.max(box.clientHeight, 240);
+  const scene = new THREE.Scene();
+  const cam = new THREE.PerspectiveCamera(42, W / H, 0.1, 2000);
+  cam.position.set(0, o.camY, o.camZ);
+
+  let ren;
+  try { ren = new THREE.WebGLRenderer({ antialias: true, alpha: true }); } catch (e) { return null; }
+  ren.setPixelRatio(Math.min(2, window.devicePixelRatio || 1));
+  ren.setSize(W, H);
+  box.appendChild(ren.domElement);
+
+  scene.add(new THREE.AmbientLight(0x7094b8, 0.95));
+  const sun = new THREE.DirectionalLight(0xffffff, 1.2);
+  sun.position.set(80, 32, 65);
+  scene.add(sun);
+
+  const earth = new THREE.Mesh(
+    new THREE.SphereGeometry(o.radius, 64, 64),
+    new THREE.MeshPhongMaterial({ map: procEarthTex(), shininess: 16 })
+  );
+  scene.add(earth);
+
+  const cl = new THREE.Mesh(
+    new THREE.SphereGeometry(o.radius * 1.012, 64, 64),
+    new THREE.MeshPhongMaterial({ map: procCloudTex(), transparent: true, opacity: 0.55, depthWrite: false })
+  );
+  scene.add(cl);
+
+  const glow = new THREE.Mesh(
+    new THREE.SphereGeometry(o.radius * 1.09, 48, 48),
+    new THREE.MeshBasicMaterial({ color: 0x38bdf8, transparent: true, opacity: 0.10, side: THREE.BackSide })
+  );
+  scene.add(glow);
+
+  loadChain(EARTH_TEX.day, t => { earth.material.map = t; earth.material.needsUpdate = true; });
+  loadChain(EARTH_TEX.clouds, t => { cl.material.map = t; cl.material.needsUpdate = true; });
+
+  // Focus on Indonesia / Ring of Fire
+  earth.rotation.y = -1.95;
+  cl.rotation.y = -1.95;
+
+  // Starfield
+  const stars = new THREE.Points((() => {
+    const g = new THREE.BufferGeometry(), a = [];
+    for (let i = 0; i < 800; i++) {
+      const r = 300 + Math.random() * 500, t = Math.random() * 6.28, p = Math.acos(2 * Math.random() - 1);
+      a.push(r * Math.sin(p) * Math.cos(t), r * Math.cos(p), r * Math.sin(p) * Math.sin(t));
+    }
+    g.setAttribute('position', new THREE.Float32BufferAttribute(a, 3));
+    return g;
+  })(), new THREE.PointsMaterial({ color: 0xffffff, size: 1.25, transparent: true, opacity: 0.85 }));
+  scene.add(stars);
+
+  // Orbiting Hyperspectral Remote Sensing Satellite (EMIT / ASTER)
+  let satPivot = null;
+  if (o.sat) {
+    satPivot = new THREE.Group();
+    satPivot.rotation.z = 0.42;
+    scene.add(satPivot);
+
+    const sat = new THREE.Group();
+    const orbitR = o.radius * 1.32;
+    sat.position.set(orbitR, 0, 0);
+
+    // Satellite Bus
+    const bus = new THREE.Mesh(
+      new THREE.BoxGeometry(1.1, 1.4, 1.1),
+      new THREE.MeshPhongMaterial({ color: 0xf59e0b, shininess: 80 })
+    );
+    sat.add(bus);
+
+    // Solar Panels
+    const panelMat = new THREE.MeshPhongMaterial({ color: 0x0284c7, emissive: 0x0c4a6e, shininess: 90 });
+    const pLeft = new THREE.Mesh(new THREE.BoxGeometry(0.1, 3.2, 0.9), panelMat);
+    pLeft.position.set(0, 2.4, 0);
+    const pRight = new THREE.Mesh(new THREE.BoxGeometry(0.1, 3.2, 0.9), panelMat);
+    pRight.position.set(0, -2.4, 0);
+    sat.add(pLeft, pRight);
+
+    // Hyperspectral Scanner Cone pointing toward Earth center
+    const coneH = orbitR - o.radius;
+    const cone = new THREE.Mesh(
+      new THREE.ConeGeometry(2.2, coneH, 24, 1, true),
+      new THREE.MeshBasicMaterial({ color: 0x22d3ee, transparent: true, opacity: 0.22, side: THREE.DoubleSide, depthWrite: false })
+    );
+    cone.rotation.z = -Math.PI / 2;
+    cone.position.set(-coneH / 2, 0, 0);
+    sat.add(cone);
+
+    satPivot.add(sat);
+  }
+
+  let drag = false, lx = 0, ly = 0, zoom = o.camZ, auto = true;
+  const dom = ren.domElement;
+  const dn = e => { drag = true; lx = e.touches ? e.touches[0].clientX : e.clientX; ly = e.touches ? e.touches[0].clientY : e.clientY; auto = false; };
+  const up = () => { drag = false; setTimeout(() => auto = true, 2500); };
+  const mv = e => {
+    if (!drag) return;
+    const x = e.touches ? e.touches[0].clientX : e.clientX, y = e.touches ? e.touches[0].clientY : e.clientY;
+    earth.rotation.y += (x - lx) * 0.005;
+    cl.rotation.y += (x - lx) * 0.005;
+    earth.rotation.x = Math.max(-1, Math.min(1, earth.rotation.x + (y - ly) * 0.003));
+    cl.rotation.x = earth.rotation.x;
+    lx = x; ly = y;
+  };
+  dom.addEventListener('mousedown', dn);
+  window.addEventListener('mouseup', up);
+  window.addEventListener('mousemove', mv);
+  dom.addEventListener('touchstart', dn, { passive: true });
+  dom.addEventListener('touchend', up);
+  dom.addEventListener('touchmove', mv, { passive: true });
+  dom.addEventListener('wheel', e => { e.preventDefault(); zoom = Math.max(32, Math.min(110, zoom + e.deltaY * 0.04)); }, { passive: false });
+
+  const inst = {
+    zoom: d => { zoom = Math.max(32, Math.min(110, zoom + d)); },
+    reset: () => { zoom = o.camZ; earth.rotation.y = -1.95; earth.rotation.x = 0; },
+    resize() {
+      const w = Math.max(box.clientWidth, 240), h = Math.max(box.clientHeight, 240);
+      ren.setSize(w, h);
+      cam.aspect = w / h;
+      cam.updateProjectionMatrix();
+    },
+    alive: true
+  };
+
+  (function loop() {
+    if (!inst.alive) return;
+    requestAnimationFrame(loop);
+    if (!box.offsetParent && box.id !== 'bgEarthCanvas') return;
+    if (auto) {
+      earth.rotation.y += o.es;
+      cl.rotation.y += o.cs;
+    }
+    if (satPivot) satPivot.rotation.y += 0.0085;
+    cam.position.z += (zoom - cam.position.z) * 0.08;
+    ren.render(scene, cam);
+  })();
+
+  return inst;
+}
+
+let bootE = null, bgE = null, ssE = null;
+function zoomEarth(d) {
+  const i = ($('loadingOverlay').style.display !== 'none' && $('loadingOverlay').offsetParent) ? bootE : bgE;
+  i && i.zoom(d);
+}
+function resetEarth() { [bootE, bgE, ssE].forEach(i => i && i.reset()); }
+window.addEventListener('resize', () => {
+  [bootE, bgE, ssE].forEach(i => i && i.resize && i.resize());
+  setTimeout(() => renderTab(activeTab()), 100);
+});
+
+/* 15. INITIAL BOOT SEQUENCE */
+let holdBoot = false;
+function toggleHoldBoot() {
+  holdBoot = !holdBoot;
+  $('btnHold').innerHTML = holdBoot ? '<i class="fa-solid fa-hand"></i> LEPASKAN LAYAR' : '<i class="fa-regular fa-hand"></i> TAHAN LAYAR BUMI';
+}
+
+const BOOT_STEPS = [
+  ['Menginisialisasi pustaka spektral SWIR (Alunite, Kaolinite, Pyrophyllite, Quartz)…', 16],
+  ['Kalibrasi sensor hiperspektral EMIT / ASTER / Sentinel-2…', 34],
+  ['Mengaktifkan algoritma Spectral Angle Mapper (SAM) & NLSMA…', 54],
+  ['Memuat matriks korelasi vektor geokimia (Au, As, Sb, Hg, Tl, Cu)…', 72],
+  ['Menghitung indeks prospektivitas terpadu SGVI (P1–P4)…', 88],
+  ['Command Center HS-GOLD SPECTRAGEO PRO v1.0 siap.', 100]
+];
+
+function runBoot() {
+  renderBootWis();
+  bootWisTimer = setInterval(nextBootWis, 5500);
+  const lg = $('bootLog');
+  let i = 0;
+  function step() {
+    if (i >= BOOT_STEPS.length) {
+      $('btnEnter').classList.remove('opacity-40', 'pointer-events-none');
+      $('btnEnter').classList.add('animate-pulse');
+      setTimeout(() => { if (!holdBoot) dismissLoadingScreen(); }, 3800);
+      return;
+    }
+    const [s, p] = BOOT_STEPS[i];
+    $('bootStage').textContent = s;
+    $('bootPct').textContent = p + '%';
+    $('bootBar').style.width = p + '%';
+    const li = document.createElement('li');
+    li.innerHTML = '<span class="text-emerald-400">✔</span> ' + s;
+    lg.appendChild(li);
+    lg.scrollTop = lg.scrollHeight;
+    i++;
+    setTimeout(step, 420);
+  }
+  step();
+}
+
+function dismissLoadingScreen() {
+  clearInterval(bootWisTimer);
+  const o = $('loadingOverlay');
+  o.style.opacity = 0;
+  setTimeout(() => { o.style.display = 'none'; }, 700);
+}
+
+/* 16. COLORFUL SMART CHATBOT WITH WIKIPEDIA, GOOGLE, PERPLEXITY & CHATGPT LINKS */
+const CHAT_KB = [
+  {
+    k: ['sgvi', 'indeks', 'prospektivitas', 'p1', 'p2'],
+    a: () => `<b>Spectral-Geochemical Vector Index (SGVI)</b> dirumuskan sebagai:<br><code>SGVI = 0,30S + 0,35G + 0,25T + 0,10L</code><br>• <b>S</b> = skor mineral alterasi spektral (SAM/NLSMA)<br>• <b>G</b> = skor anomali geokimia pathfinder (Au-As-Sb-Hg-Tl-Cu)<br>• <b>T</b> = skor kontrol struktur/rekahan<br>• <b>L</b> = skor kesesuaian litologi.<br>Hasilnya membagi prospek menjadi <b>P1 (Sangat Tinggi ≥0,75)</b>, <b>P2 (Tinggi)</b>, <b>P3 (Sedang)</b>, dan <b>P4 (Rendah)</b>.`
+  },
+  {
+    k: ['sam', 'nlsma', 'sudut', 'mixture', 'unmixing'],
+    a: () => {
+      const m = getMixedSpectrum();
+      return `<b>1. Spectral Angle Mapper (SAM):</b> <code>θ = cos⁻¹(ΣRᵢLᵢ / (√ΣRᵢ² · √ΣLᵢ²))</code> mengukur kemiripan spektrum terhadap mineral referensi (semakin kecil θ, semakin mirip). Saat ini kecocokan terbaik adalah <b>${m.bestMatch.name} (θ = ${fmt(m.bestMatch.deg, 1)}°)</b>.<br><b>2. NLSMA:</b> <code>A_alteration = ΣwᵢFᵢ</code> mengestimasi fraksi kelimpahan relatif mineral campuran nonlinier dalam satu piksel (saat ini <b>${fmt(m.A_alt * 100, 1)}%</b>).`;
+    }
+  },
+  {
+    k: ['swir', 'al-oh', '1.40', '1.90', '2.17', '2.21', 'serapan', 'kurva'],
+    a: () => `Mineral alterasi utama sistem High-Sulfidation (<i>Alunite, Kaolinite/Dickite, Pyrophyllite</i>) memiliki fitur serapan ikatan <b>Al–OH</b> yang sangat diagnostik pada panjang gelombang <b>~1,40 µm</b>, <b>~1,90 µm</b>, dan <b>~2,17–2,21 µm</b>. Alunite menunjukkan lembah tajam di ~2,17 µm, Kaolinite memiliki doublet di 2,165 &amp; 2,205 µm, sedangkan Pyrophyllite tajam di 2,168 µm.`
+  },
+  {
+    k: ['alunite', 'pyrophyllite', 'diaspore', 'advanced argillic'],
+    a: () => `Zona <b>Advanced Argillic</b> dicirikan oleh himpunan <b>Alunite – Pyrophyllite – Diaspore</b> yang terbentuk oleh fluida magmatik-hidrotermal sangat asam (pH &lt; 2) dan suhu tinggi (220–320°C) di dekat pusat <i>up-flow</i>, dengan pengayaan kuat unsur vektor <b>As – Sb – Hg – Au – Tl</b>.`
+  },
+  {
+    k: ['enargite', 'luzonite', 'covellite', 'sulfida', 'tembaga'],
+    a: () => `<b>Enargite</b> dan polimorfnya <b>Luzonite</b> (Cu₃AsS₄) adalah mineral sulfosalt penciri utama zona mineralisasi primer sistem High-Sulfidation (berkorelasi <code>++</code> dengan Cu, As, Sb dan <code>+</code> dengan Au). Karena reflektansinya rendah pada spektrum SWIR, deteksinya wajib diverifikasi melalui uji <b>geokimia batuan dan petrografi sayatan poles</b>.`
+  },
+  {
+    k: ['zonasi', 'silisifikasi', 'vuggy', 'argilik', 'propilitik'],
+    a: () => `Model zonasi alterasi sistem HS bergerak konsentris dari pusat panas vulkanik/intrusi: <b>Silisifikasi (Quartz ±Au / vuggy silica)</b> di inti/puncak rekahan → <b>Advanced Argillic (Alunite–Pyrophyllite–Diaspore)</b> → <b>Argilik (Kaolinite–Dickite)</b> → <b>Propilitik (Chlorite–Epidote)</b> di zona terluar.`
+  }
+];
+
+function buildRefLinks(query) {
+  const q = encodeURIComponent(query);
+  return `
+    <div class="mt-2.5 pt-2 border-t border-cyan-800/50 text-[10px] space-y-1">
+      <div class="text-amber-300 font-bold"><i class="fa-solid fa-link mr-1"></i>Sumber Referensi &amp; Eksplorasi AI Lanjutan:</div>
+      <div class="flex flex-wrap gap-1.5">
+        <a class="px-2 py-0.5 rounded bg-sky-950 border border-sky-500/50 text-sky-200 hover:bg-sky-800" target="_blank" rel="noopener" href="https://id.wikipedia.org/w/index.php?search=${q}">Wikipedia ID</a>
+        <a class="px-2 py-0.5 rounded bg-blue-950 border border-blue-500/50 text-blue-200 hover:bg-blue-800" target="_blank" rel="noopener" href="https://en.wikipedia.org/w/index.php?search=${q}">Wikipedia EN</a>
+        <a class="px-2 py-0.5 rounded bg-amber-950 border border-amber-500/50 text-amber-200 hover:bg-amber-800" target="_blank" rel="noopener" href="https://www.google.com/search?q=${q}">Google Search</a>
+        <a class="px-2 py-0.5 rounded bg-indigo-950 border border-indigo-500/50 text-indigo-200 hover:bg-indigo-800" target="_blank" rel="noopener" href="https://scholar.google.com/scholar?q=${q}">Google Scholar</a>
+        <a class="px-2 py-0.5 rounded bg-teal-950 border border-teal-500/50 text-teal-200 hover:bg-teal-800" target="_blank" rel="noopener" href="https://www.perplexity.ai/search?q=${q}">Perplexity AI</a>
+        <a class="px-2 py-0.5 rounded bg-emerald-950 border border-emerald-500/50 text-emerald-200 hover:bg-emerald-800" target="_blank" rel="noopener" href="https://chatgpt.com/?q=${q}">ChatGPT</a>
+      </div>
+    </div>
+  `;
+}
+
+function toggleChat() {
+  const p = $('chatPanel');
+  p.classList.toggle('hidden');
+  p.classList.toggle('flex');
+  if (!p.dataset.init) {
+    p.dataset.init = '1';
+    botSay('Selamat datang di <b>SPECTRA-AI</b>! Saya siap menjelaskan korelasi spektral SWIR (SAM &amp; NLSMA), vektor geokimia pathfinder (Au-As-Sb-Hg-Tl-Cu), model zonasi High-Sulfidation, hingga indeks SGVI lengkap dengan tautan sumber ilmiah.' + buildRefLinks('High-sulfidation epithermal gold deposit hyperspectral'));
+    $('chatChips').innerHTML = [
+      'Indeks SGVI',
+      'Rumus SAM & NLSMA',
+      'Serapan Al-OH 1.40/2.20 µm',
+      'Alunite & Pyrophyllite',
+      'Enargite & Luzonite',
+      'Zonasi High-Sulfidation'
+    ].map(x => `<button class="btn btn-gh" style="padding:3px 8px;font-size:10px" onclick="$('chatIn').value='${x}';sendChat()">${x}</button>`).join('');
+  }
+}
+
+function botSay(html) {
+  const b = $('chatBox');
+  b.insertAdjacentHTML('beforeend', `<div class="flex"><div class="chatbubble bg-gradient-to-br from-slate-900 to-sky-950/90 border border-cyan-500/40 shadow-md">${html}</div></div>`);
+  b.scrollTop = b.scrollHeight;
+}
+
+async function sendChat() {
+  const inp = $('chatIn');
+  const q = inp.value.trim();
+  if (!q) return;
+  inp.value = '';
+  const b = $('chatBox');
+  b.insertAdjacentHTML('beforeend', `<div class="flex justify-end"><div class="chatbubble bg-gradient-to-r from-amber-500 to-orange-500 text-slate-950 font-semibold shadow"></div></div>`);
+  b.lastChild.firstChild.textContent = q;
+  b.scrollTop = b.scrollHeight;
+
+  const ql = q.toLowerCase();
+  const hit = CHAT_KB.find(item => item.k.some(kw => ql.includes(kw)));
+  if (hit) {
+    botSay(hit.a() + buildRefLinks(q + ' high sulfidation epithermal'));
+    return;
+  }
+
+  botSay('<i class="text-cyan-300"><i class="fa-solid fa-spinner fa-spin mr-1"></i>Mencari referensi geosains di Wikipedia…</i>');
+  try {
+    const r = await fetch('https://en.wikipedia.org/w/api.php?action=query&list=search&format=json&origin=*&srlimit=1&srsearch=' + encodeURIComponent(q + ' geology mineral hydrothermal'));
+    const j = await r.json();
+    const t = j.query && j.query.search && j.query.search[0];
+    if (t) {
+      const s = await fetch('https://en.wikipedia.org/api/rest_v1/page/summary/' + encodeURIComponent(t.title));
+      const sj = await s.json();
+      b.lastChild.remove();
+      botSay(`<b>${sj.title}</b><br>${(sj.extract || '').slice(0, 480)}…${buildRefLinks(t.title)}`);
+      return;
+    }
+  } catch (e) {}
+
+  b.lastChild.remove();
+  botSay(`Untuk pendalaman topik <b>"${q}"</b> dalam konteks eksplorasi mineral dan penginderaan jauh geologi, silakan telusuri melalui tautan sumber ilmiah dan AI di bawah ini:` + buildRefLinks(q + ' epithermal gold geochemistry'));
+}
+
+/* 17. INITIALIZATION */
+function init() {
+  buildTabs();
+  renderKPI();
+  drawZonationSVG();
+  regenSgviMap();
+  bindSgviMapEvents();
+  renderInsights();
+  renderMineralTable();
+  renderMatrixTable();
+  updateGeochemSim();
+  renderSgviWeights();
+  renderSgviSection();
+  renderFullReport();
+  toggleSensorBand('emit');
+
+  try {
+    if (localStorage.getItem('hs_theme') === 'l') {
+      document.documentElement.classList.remove('dark');
+      $('themeIcon').className = 'fa-solid fa-sun';
+    }
+  } catch (e) {}
+
+  updateClock();
+
+  try {
+    bootE = makeEarth($('loadingEarthCanvas'), { camZ: 56, camY: 2, radius: 20, es: 0.0011, cs: 0.0007, sat: true });
+    bgE = makeEarth($('bgEarthCanvas'), { camZ: 64, camY: 4, radius: 22, es: 0.0007, cs: 0.0005, sat: true });
+  } catch (e) { console.warn('Three.js init warning:', e); }
+
+  runBoot();
+  idleReset();
+}
+
+window.addEventListener('DOMContentLoaded', init);
+</script>
+</body>
+</html>
